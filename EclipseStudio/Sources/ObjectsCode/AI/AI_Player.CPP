@@ -4667,7 +4667,7 @@ void obj_Player::DrawReticle()
 		}
 		gPFX_ScopeEffect.SetScopeScale(scaleScope);
 	}
-#ifndef FINAL_BUILD
+/*#ifndef FINAL_BUILD
 	else if(g_bEditMode && r_show_player_debug_data->GetBool() && scopeConfig->reticule) // draw reticule only in editor, in game reticule is in flash
 	{
 		float rw = (float)scopeConfig->reticule->GetWidth();
@@ -4675,7 +4675,28 @@ void obj_Player::DrawReticle()
 		float yy = g_camera_mode->GetInt() == 1?cy2:cy;
 		r3dDrawBox2D(float(cx-(rw/2)), float(yy-(rh/2)), rw, rh, r3dColor::white, scopeConfig->reticule);
 	}
-#endif
+#endif*/
+
+	if(!d_disable_game_hud->GetBool() && !forcedEmptyHands && g_camera_mode->GetInt() != 2) // crosshair //if(!d_disable_game_hud->GetBool() && g_camera_mode->GetInt() != 2 || g_bEditMode && r_show_player_debug_data->GetBool() && scopeConfig->reticule) // crosshair
+	{
+		if (!scopeRendering || r_hud_filter_mode->GetInt()==HUDFilter_NightVision)
+		{
+			if(m_Weapons[m_SelectedWeapon])
+			{
+				if (m_Weapons[m_SelectedWeapon]->getItemID() != 101315 && m_Weapons[m_SelectedWeapon]->getItemID() != 101319)
+				{
+					//if (ShowCrosshair)
+					//{
+						scopeConfig = m_Weapons[m_SelectedWeapon]->getScopeConfig(isFirstPerson);
+						float rw = (float)scopeConfig->reticule->GetWidth();
+						float rh = (float)scopeConfig->reticule->GetHeight();
+						float yy = g_camera_mode->GetInt() == 1?cy2:cy;
+						r3dDrawBox2D(float(cx-(rw/2)), float(yy-(rh/2)), rw, rh, r3dColor::white, scopeConfig->reticule);
+					//}
+				}
+			}
+		}
+	}
 
 	if(!scopeRendering)
 		g_ScopeFeedbackTimer = 0.0f;
