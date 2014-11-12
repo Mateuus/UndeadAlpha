@@ -1560,11 +1560,11 @@ void game::MainLoop()
 		if(strstr(__r3dCmdLine, "-ffgrtvzdf") == NULL)
 		{
 			// hardcoded IP for now
-			g_serverip->SetString("66.180.197.58");
+			g_serverip->SetString("127.0.0.1"); //66.180.197.58
 		}
 
 		// override API settings
-		g_api_ip->SetString("api1.thewarinc.com");
+		g_api_ip->SetString("127.0.0.1");
 	case	Menu_AppSelect::bStartGameSVN:
 		g_bEditMode = false;
 		ExecuteNetworkGame();

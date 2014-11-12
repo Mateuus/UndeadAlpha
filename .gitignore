@@ -17,3 +17,9 @@
 /server/bin
 /Eternity/Debug_Server
 /Eternity/Release_Server
+/EclipseStudio/Release
+/EclipseStudio/Debug
+/Eternity/Debug_NoCrashRpt
+/Eternity/Release
+/server/SupervisorServer/Release
+/server/WO_GameServer/Release

@@ -12,7 +12,7 @@
 
 CLogUploader	gLogUploader;
 
-static	const char*	gDomainBaseUrl= "/WarZ/api/";
+static	const char*	gDomainBaseUrl= "/UndeadAlpha/api/";
 static	int		gDomainPort   = 443;
 static	bool		gDomainUseSSL = true;
 // see CLogUploader::Start for dev mode override

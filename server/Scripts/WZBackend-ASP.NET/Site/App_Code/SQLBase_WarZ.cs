@@ -14,7 +14,7 @@ public class SQLBase
     string server = "";
     string user = "";
     string pass = "";
-    string workdb = "WarZ";
+    string workdb = "UndeadAlpha";
 
     SqlConnection conn_ = null;
 
@@ -30,9 +30,9 @@ public class SQLBase
         }
         else*/
         {
-            server = "db1.thewarinc.com,11433";
-            user = "wz_api_user";
-            pass = "g54vxca5Ez";
+            server = "127.0.0.1, 1433";
+            user = "sa";
+            pass = "DHe4843c";
         }
     }
 

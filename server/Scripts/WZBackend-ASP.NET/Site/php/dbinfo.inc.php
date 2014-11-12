@@ -2,11 +2,11 @@
 	$db_apikey = "ACOR4823G%sjYU*@476xnDvYaK@!56";
 	function db_connect()
 	{
-		$db_user   = "wz_api_user";
-		$db_pass   = "g54vxca5Ez";
-		$db_dbname = "WarZ";
+		$db_user   = "sa";
+		$db_pass   = "DHe4843c";
+		$db_dbname = "UndeadAlpha";
 
-		$db_serverName     = "db1.thewarinc.com,11433";
+		$db_serverName     = "127.0.0.1, 1433";
 		$db_connectionInfo = array(
 			"UID" => $db_user,
 			"PWD" => $db_pass,
@@ -18,10 +18,13 @@
 
 		if(! $conn)
 		{
-			//echo "Connection could not be established.\n";
+			echo "Connection could not be established.\n";
 			die( print_r( sqlsrv_errors(), true));
 			exit();
-		}
+		}else
+    {
+      echo "Connection established.\n";
+    }
 
 		return $conn;
 	}

@@ -65,10 +65,10 @@ static bool downloadLootBoxData()
 
 	CkHttpRequest req;
 	req.UsePost();
-	req.put_Path("/WarZ/api/php/api_GetLootBoxConfig.php");
+	req.put_Path("/UndeadAlpha/api/php/api_GetLootBoxConfig.php");
 	req.AddParam("serverkey", "9F179EB9-C74E-4933-85B5-EB135E16F5EF");
 
-	CkHttpResponse* resp = http.SynchronousRequest("api1.thewarinc.com", 443, true, req);
+	CkHttpResponse* resp = http.SynchronousRequest("127.0.0.1", 443, true, req);
 	if(!resp)
 		r3dError("timeout getting lootbox db");
 			
@@ -136,7 +136,7 @@ void gameServerLoop()
     extern int  gDomainPort;
     extern bool gDomainUseSSL;
 	
-    g_api_ip->SetString("66.180.197.58");
+    g_api_ip->SetString("127.0.0.1");
     gDomainUseSSL = false;
     gDomainPort   = 80;
   }
