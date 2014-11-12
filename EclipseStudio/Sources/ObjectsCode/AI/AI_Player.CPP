@@ -806,6 +806,26 @@ void obj_Player::UpdateLoadoutSlot(const wiCharDataFull& slot)
 	else
 		uberEquip_->SetSlot(SLOT_Helmet, (Gear*)NULL);
 
+    if(NetworkLocal)
+	{
+			// ViruZ NVG Check
+					 if(CurLoadout.Items[wiCharDataFull::CHAR_LOADOUT_HEADGEAR].itemID == 20188 ||
+						CurLoadout.Items[wiCharDataFull::CHAR_LOADOUT_HEADGEAR].itemID == 20187 ||
+						CurLoadout.Items[wiCharDataFull::CHAR_LOADOUT_HEADGEAR].itemID == 20067)
+					{
+						//r_hud_filter_mode->SetInt(0); // turn on NVG
+						//
+					}
+					else
+					{
+						if (r_hud_filter_mode->GetInt() == 1)
+						{
+							r_hud_filter_mode->SetInt(0);
+							hudMain->showMessage(gLangMngr.getString("Turn off NVG"));
+						}
+					}
+	}
+
 	// start loading meshes
 	for(int i=0; i<NUM_WEAPONS_ON_PLAYER; ++i)
 	{
@@ -4450,6 +4470,23 @@ void obj_Player::DrawReticle()
 {
 	if(!NetworkLocal)
 		return;
+
+	// Fix Reticle - by Yuri-BR
+    if(g_camera_mode->GetInt() == 0 && m_Weapons[m_SelectedWeapon] && !forcedEmptyHands)
+    {
+    if(m_Weapons[m_SelectedWeapon]->getCategory() == storecat_ASR, storecat_SNP, storecat_SHTG, storecat_MG, storecat_HG, storecat_SMG && m_isInScope)
+    {
+        hudMain->setshowHideReticle(false);
+    }
+    else
+    {
+        hudMain->setshowHideReticle(true);
+    }
+    }
+    else
+    {
+    hudMain->setshowHideReticle(false);
+    }  
 	
 	g_RenderScopeEffect = 0;
 	

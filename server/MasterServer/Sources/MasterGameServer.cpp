@@ -55,8 +55,11 @@ void CMasterGameServer::Start(int port, int in_serverId)
   r3d_assert(masterServerId_ > 0 && masterServerId_ < 255);
   
   // give time for supervisors to connect to us (except for dev server 2000)
-  supersCooldown_  = r3dGetTime() + 60.0f;
-  if(masterServerId_ == 200) supersCooldown_ = -1;
+  /*supersCooldown_  = r3dGetTime() + 60.0f;
+  if(masterServerId_ == 200) supersCooldown_ = -1;*/
+  supersCooldown_  = r3dGetTime() + gServerConfig->supervisorCoolDownSeconds_;
+
+
   
 #if ENABLED_SERVER_WEAPONARMORY
   DoFirstItemsDbUpdate();

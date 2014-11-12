@@ -19,6 +19,8 @@ CMasterServerConfig::CMasterServerConfig()
   clientPort_  = r3dReadCFG_I(configFile, group, "clientPort", GBNET_CLIENT_PORT);
   masterCCU_   = r3dReadCFG_I(configFile, group, "masterCCU",  3000);
 
+  supervisorCoolDownSeconds_ = r3dReadCFG_F(configFile, group, "supervisorCoolDownSeconds",  15.0f);
+
   #define CHECK_I(xx) if(xx == 0)  r3dError("missing %s value in %s", #xx, configFile);
   #define CHECK_S(xx) if(xx == "") r3dError("missing %s value in %s", #xx, configFile);
   CHECK_I(masterPort_);

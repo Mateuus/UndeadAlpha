@@ -68,6 +68,7 @@ public:
 	void	setActiveSlot(int slotID);
 	void	setActivatedSlot(int slotID);
 	void	showMessage(const wchar_t* text);
+	void    setshowHideReticle(bool phase);  
 
 	void	showChat(bool showChat, bool force=false);
 	void	showChatInput();

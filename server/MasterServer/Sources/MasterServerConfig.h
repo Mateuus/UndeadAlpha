@@ -9,6 +9,7 @@ class CMasterServerConfig
 	int		clientPort_;
 	int		serverId_;
 	int		masterCCU_;	// max number of connected peers
+	float   supervisorCoolDownSeconds_;
 
 	//
 	// permanent games groups

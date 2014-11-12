@@ -475,6 +475,12 @@ void HUDDisplay::showMessage(const wchar_t* text)
 	gfxHUD.Invoke("_root.api.showMsg", text);
 }
 
+void HUDDisplay::setshowHideReticle(bool phase)
+{
+    if(!Inited) return;
+    gfxHUD.SetVariable("_root.api.Main.reticle.visible", phase);
+}  
+
 void HUDDisplay::showChat(bool showChat, bool force)
 {
 	if(!Inited) return;

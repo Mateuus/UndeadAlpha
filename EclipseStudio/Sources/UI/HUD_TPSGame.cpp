@@ -540,7 +540,96 @@ void TPSGameHUD :: SetCameraPure ( r3dCamera &Cam)
 
 
 	// dead camera
-	if(pl->bDead)
+	if(pl->bDead && !hudPause->isActive() && !hudMain->isPlayersListVisible() && !hudPause->isActive())
+	{
+		r3dPoint3D camPos, camPointTo;
+		bool do_camera = false;
+		bool check_cam_collision = true;
+		{
+			static r3dPoint3D oldPlayerPos(0,0,0);
+			static r3dPoint3D camPosOffset(0,0,0);
+			camPointTo = pl->GetPosition();
+
+			// find a cam position
+			if(!oldPlayerPos.AlmostEqual(pl->GetPosition())) // make sure to do that check only once
+			{
+				oldPlayerPos = pl->GetPosition();
+				r3dPoint3D possible_cam_offset[4] = {r3dPoint3D(-3, 5, -3), r3dPoint3D(3, 5, -3), r3dPoint3D(-3, 5, 3), r3dPoint3D(3, 5, 3)};
+				int found=-1;
+				for(int i=0; i<4; ++i)
+				{
+					r3dPoint3D raydir = ((pl->GetPosition()+possible_cam_offset[i]) - camPointTo);
+					float rayLen = raydir.Length();
+					if(rayLen > 0)
+					{
+						raydir.Normalize();
+						PxRaycastHit hit;
+						PxSceneQueryFilterData filter(PxFilterData(COLLIDABLE_STATIC_MASK, 0, 0, 0), PxSceneQueryFilterFlag::eSTATIC);
+						if(!g_pPhysicsWorld->raycastSingle(PxVec3(camPointTo.x, camPointTo.y, camPointTo.z), PxVec3(raydir.x, raydir.y, raydir.z), rayLen, PxSceneQueryFlag::eIMPACT, hit, filter))
+						{
+							found = i;
+							break;
+						}
+					}
+				}
+				if(found!=-1)
+				{
+					camPosOffset = possible_cam_offset[found];
+				}
+				else
+				{
+					camPosOffset = r3dPoint3D(-0.1f, 5, -0.1f);
+				}
+			}
+
+			camPos = pl->GetPosition() + camPosOffset;
+			do_camera = true;
+			check_cam_collision = false;
+		}
+
+		if(do_camera)
+		{
+			extern int g_CCBlackWhite;
+			extern float g_fCCBlackWhitePwr;
+			g_CCBlackWhite = 1;
+			g_fCCBlackWhitePwr = R3D_CLAMP((r3dGetTime() - pl->TimeOfDeath)/2.0f, 0.0f, 1.0f); // go to black and white while look at our dead body
+
+			// check for collision
+			if(check_cam_collision)
+				CheckCameraCollision(camPos, camPointTo, false);
+
+
+			r3dVector CamPos = pl->GetPosition();
+			CamPos += r3dPoint3D( 0, ( 5 ), 0 );
+
+			int mMX=Mouse->m_MouseMoveX, mMY=Mouse->m_MouseMoveY;
+			float  glb_MouseSensAdj = CurrentRig.MouseSensetivity * g_mouse_sensitivity->GetFloat();
+
+			static float camangle = 0;
+			static float camangle2 = 0;
+			camangle += float(-mMX) * glb_MouseSensAdj;
+			camangle2 += float(-mMY) * glb_MouseSensAdj;
+
+			if(camangle > 360.0f ) camangle = camangle - 360.0f;
+			if(camangle < 0.0f )   camangle = camangle + 360.0f;
+
+			if(camangle2 > 30.0f ) camangle2 = 30.0f;
+			if(camangle2 < -25.0f )   camangle2 = -25.0f;
+
+
+			D3DXMATRIX mr;
+			D3DXMatrixRotationYawPitchRoll(&mr, R3D_DEG2RAD(-camangle), R3D_DEG2RAD(-camangle2), 0);
+			r3dVector plForwardVector = r3dVector(mr ._31, mr ._32, mr ._33);
+
+			CamPos += -plForwardVector * 8 ;
+
+			Cam.SetPosition(CamPos);
+			Cam.PointTo( CamPos + plForwardVector * 3 + r3dVector ( 0, -1, 0) );
+			Cam.vUP = r3dPoint3D(0, 1, 0);
+			return;
+		}
+	}
+	/*if(pl->bDead)
 	{
 		r3dPoint3D camPos, camPointTo;
 		bool do_camera = false;
@@ -604,7 +693,9 @@ void TPSGameHUD :: SetCameraPure ( r3dCamera &Cam)
 			FPS_Position = Cam;
 			return;
 		}
-	}
+	}*/
+
+
 
 	if(pl->bDead && hudAttm->isActive())
 		hudAttm->Deactivate();
