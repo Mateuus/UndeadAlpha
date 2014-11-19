@@ -4824,7 +4824,7 @@ void obj_Player::DrawLabel()
 	}
 #endif
 
-#ifndef FINAL_BUILD
+//#ifndef FINAL_BUILD
 	char plrUserName[64]; GetUserName(plrUserName);
 	if(strncmp(plrUserName, "@@TestDummy", 10) == 0)
 	{
@@ -4836,7 +4836,7 @@ void obj_Player::DrawLabel()
 			Font_Label->PrintF(scrCoord.x+20, scrCoord.y+25,r3dColor(255,255,255), "Distance %.2f", dist);
 		}
 	}
-#endif
+//#endif
 
 #ifndef FINAL_BUILD
 	if(r_show_player_debug_data->GetBool())

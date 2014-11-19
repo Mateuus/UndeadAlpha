@@ -78,6 +78,8 @@ bool HUDDisplay::Init()
 	gfxHUD.RegisterEventHandler("eventNoteWritePost", MAKE_CALLBACK(eventNoteWritePost));
 	gfxHUD.RegisterEventHandler("eventNoteClosed", MAKE_CALLBACK(eventNoteClosed));
 	gfxHUD.RegisterEventHandler("eventNoteReportAbuse", MAKE_CALLBACK(eventNoteReportAbuse));
+	gfxHUD.RegisterEventHandler("eventShowPlayerListContextMenu", MAKE_CALLBACK(eventShowPlayerListContextMenu));
+	gfxHUD.RegisterEventHandler("eventPlayerListAction", MAKE_CALLBACK(eventPlayerListAction));
 
 	{
 		Scaleform::GFx::Value var[4];
@@ -231,6 +233,193 @@ void HUDDisplay::setBloodAlpha(float alpha)
 
 	bloodAlpha = alpha;
 	gfxBloodStreak.SetVariable("_root.blood.alpha", alpha);
+}
+
+void HUDDisplay::eventShowPlayerListContextMenu(r3dScaleformMovie* pMove, const Scaleform::GFx::Value* args, unsigned argCount)
+{
+    int isDev = gUserProfile.ProfileData.isDevAccount;
+	Scaleform::GFx::Value var[3];
+
+	if(isDev){
+		var[0].SetInt(1);
+		var[1].SetString("");
+		var[2].SetInt(0);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);
+
+		var[0].SetInt(2);
+		var[1].SetString("GOTO");
+		var[2].SetInt(2);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);
+
+		var[0].SetInt(3);
+		var[1].SetString("TOME");
+		var[2].SetInt(3);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);
+
+		var[0].SetInt(4);
+		var[1].SetString("KICK");
+		var[2].SetInt(4);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);
+
+		var[0].SetInt(5);
+		var[1].SetString("BAN");
+		var[2].SetInt(5);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);
+
+		var[0].SetInt(6);
+		var[1].SetString("VERIFICAR");
+		var[2].SetInt(6);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);
+		
+		
+		var[0].SetInt(7);
+		var[1].SetString("");
+		var[2].SetInt(0);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);
+
+	}else{
+		//ViruZ Group
+		
+				
+		var[0].SetInt(1);
+		var[1].SetString("$HUD_PlayerAction_Report");
+		var[2].SetInt(1);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);
+
+		var[0].SetInt(2);
+		var[1].SetString("INVITE FRIEND");
+		var[2].SetInt(2);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);
+		
+		var[0].SetInt(3);
+		var[1].SetString("ACCEPT INVITE");
+		var[2].SetInt(3);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);
+		
+		var[0].SetInt(4);
+		var[1].SetString("DECLINE INVITE");
+		var[2].SetInt(4);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);
+	
+		var[0].SetInt(5);
+		var[1].SetString("");
+		var[2].SetInt(0);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);
+
+		var[0].SetInt(6);
+		var[1].SetString("");
+		var[2].SetInt(0);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);
+		
+		//MENUS ADICIONAIS LISTA PLAYER
+		/*var[0].SetInt(7);
+		var[1].SetString("");
+		var[2].SetInt(0);
+		gfxHUD.Invoke("_root.api.setPlayerListContextMenuButton", var, 3);*/
+	}
+
+	gfxHUD.Invoke("_root.api.showPlayerListContextMenu", "");
+}
+
+void HUDDisplay::eventPlayerListAction(r3dScaleformMovie* pMove, const Scaleform::GFx::Value* args, unsigned argCount)
+{
+	int action = args[0].GetInt();
+	const char* pName = args[1].GetString();
+
+	int isDev = gUserProfile.ProfileData.isDevAccount;
+	if(isDev){
+    if(action == 2)
+    {
+        showChatInput();
+
+
+        char cmGoto[128];
+        sprintf(cmGoto, "/goto %s ", pName);
+        //gfxHUD.Invoke("_root.api.setChatActive", ffReport);
+
+
+        chatVisible = true;
+        Scaleform::GFx::Value var[3];
+        var[0].SetBoolean(true);
+        var[1].SetBoolean(true);
+        var[2].SetString(cmGoto);
+        gfxHUD.Invoke("_root.api.showChat", var, 3);
+        chatVisibleUntilTime = r3dGetTime() + 20.0f;
+    }
+	 if(action == 3)
+    {
+        showChatInput();
+
+
+        char cmGoto[128];
+        sprintf(cmGoto, "/tome %s ", pName);
+        //gfxHUD.Invoke("_root.api.setChatActive", ffReport);
+
+
+        chatVisible = true;
+        Scaleform::GFx::Value var[3];
+        var[0].SetBoolean(true);
+        var[1].SetBoolean(true);
+        var[2].SetString(cmGoto);
+        gfxHUD.Invoke("_root.api.showChat", var, 3);
+        chatVisibleUntilTime = r3dGetTime() + 20.0f;
+    }
+    if(action == 4)
+    {
+        showChatInput();
+
+
+        char cmKick[128];
+        sprintf(cmKick, "/kick %s ", pName);
+        //gfxHUD.Invoke("_root.api.setChatActive", ffReport);
+
+
+        chatVisible = true;
+        Scaleform::GFx::Value var[3];
+        var[0].SetBoolean(true);
+        var[1].SetBoolean(true);
+        var[2].SetString(cmKick);
+        gfxHUD.Invoke("_root.api.showChat", var, 3);
+        chatVisibleUntilTime = r3dGetTime() + 20.0f;
+    }
+    if(action == 5)
+    {
+        showChatInput();
+
+
+        char cmBan[128];
+        sprintf(cmBan, "/ban %s ", pName);
+        //gfxHUD.Invoke("_root.api.setChatActive", ffReport);
+
+
+        chatVisible = true;
+        Scaleform::GFx::Value var[3];
+        var[0].SetBoolean(true);
+        var[1].SetBoolean(true);
+        var[2].SetString(cmBan);
+        gfxHUD.Invoke("_root.api.showChat", var, 3);
+        chatVisibleUntilTime = r3dGetTime() + 20.0f;
+    }
+	if(action == 6)
+    {
+        showChatInput();
+
+
+        char cmverificar[128];
+        sprintf(cmverificar, "/verificar %s ", pName);
+        //gfxHUD.Invoke("_root.api.setChatActive", ffReport);
+
+
+        chatVisible = true;
+        Scaleform::GFx::Value var[3];
+        var[0].SetBoolean(true);
+        var[1].SetBoolean(true);
+        var[2].SetString(cmverificar);
+        gfxHUD.Invoke("_root.api.showChat", var, 3);
+        chatVisibleUntilTime = r3dGetTime() + 20.0f;
+    }
+	}
+	
 }
 
 void HUDDisplay::eventChatMessage(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount)
@@ -533,12 +722,15 @@ void HUDDisplay::clearPlayersList()
 }
 
 extern const char* getReputationString(int reputation);
-void HUDDisplay::addPlayerToList(int num, const char* name, int reputation, bool isLegend, bool isDev)
+//nova Hud
+//public function addPlayerToList(index:int, pos:int, Name:String, alignment:String, isLegend:Boolean, isDev:Boolean, isPunisher:Boolean, isInvitePending:Boolean, isVoipMuted:Boolean, isPremium:Boolean, isLocalPlayer:Boolean)
+void HUDDisplay::addPlayerToList(int num, const char* name, int Reputation, bool isLegend, bool isDev, bool isPunisher, bool isInvitePending, bool isPremium,bool isMute, bool local)
 {
 	if(!Inited) return;
-	Scaleform::GFx::Value var[5];
+	Scaleform::GFx::Value var[11];
 	var[0].SetInt(num);
-	
+	var[1].SetInt(num);
+
 	// dirty stl :)
 	std::string sUser = name;
 	int pos = 0;
@@ -546,17 +738,23 @@ void HUDDisplay::addPlayerToList(int num, const char* name, int reputation, bool
 		sUser.replace(pos, 1, "&lt;");
 	while((pos = sUser.find('>'))!=-1)
 		sUser.replace(pos, 1, "&gt;");
-	
-	var[1].SetString(sUser.c_str());
 
-	const char* algnmt = getReputationString(reputation);
+	var[2].SetString(sUser.c_str());
+
+	const char* algnmt = getReputationString(Reputation);
 	if(isDev)
 		algnmt = "";
-	var[2].SetString(algnmt);
-	var[3].SetBoolean(isLegend);
-	var[4].SetBoolean(isDev);
-	gfxHUD.Invoke("_root.api.addPlayerToList", var, 5);
+	var[3].SetString(algnmt);
+	var[4].SetBoolean(isLegend);
+	var[5].SetBoolean(isDev);
+	var[6].SetBoolean(isPunisher);
+	var[7].SetBoolean(isInvitePending);
+	var[8].SetBoolean(isMute);
+	var[9].SetBoolean(isPremium);
+	var[10].SetBoolean(local);
+	gfxHUD.Invoke("_root.api.addPlayerToList", var, 11);
 }
+
 
 void HUDDisplay::showPlayersList(int flag)
 {

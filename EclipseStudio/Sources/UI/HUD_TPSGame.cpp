@@ -929,23 +929,37 @@ static void DrawMenus()
 
 		if(hudMain && !hudMain->isChatInputActive())
 		{
-			bool tabPressed = InputMappingMngr->isPressed(r3dInputMappingMngr::KS_SHOW_PLAYERS);
-			if(tabPressed && !hudMain->isPlayersListVisible())
+			bool showPlayerList = InputMappingMngr->wasPressed(r3dInputMappingMngr::KS_SHOW_PLAYERS);
+			if(showPlayerList)
 			{
-				hudMain->clearPlayersList();
-				int index = 0;
-				for(int i=0; i<R3D_ARRAYSIZE(CGL.playerNames); i++)
+				if (!hudMain->isPlayersListVisible())
 				{
-					if(CGL.playerNames[i].Gamertag[0])
+					hudMain->clearPlayersList();
+					int index = 0;
+					for(int i=0; i<R3D_ARRAYSIZE(CGL.playerNames); i++)
 					{
-						hudMain->addPlayerToList(index++, CGL.playerNames[i].Gamertag, CGL.playerNames[i].reputation, CGL.playerNames[i].isLegend, CGL.playerNames[i].isDev);
+						if(CGL.playerNames[i].Gamertag[0])
+						{
+							char plrUserName[64]; CGL.localPlayer_->GetUserName(plrUserName);
+							hudMain->addPlayerToList(index++, CGL.playerNames[i].Gamertag, CGL.playerNames[i].plrRep, CGL.playerNames[i].isLegend, CGL.playerNames[i].isPunisher, CGL.playerNames[i].isPunisher, CGL.playerNames[i].isInvitePending,CGL.playerNames[i].isPremium,CGL.playerNames[i].isMute,strcmp(CGL.playerNames[i].Gamertag, plrUserName)==0);
+						}
 					}
+					hudMain->showPlayersList(1);
+					r3dMouse::Show();
 				}
-				hudMain->showPlayersList(1);
+				else
+				{
+					hudMain->showPlayersList(0);
+					r3dMouse::Hide();
+				}
 			}
-			else if(!tabPressed && hudMain->isPlayersListVisible())
+			if(hudMain->isPlayersListVisible() && Keyboard->WasPressed(kbsEsc))
+			{
 				hudMain->showPlayersList(0);
+				r3dMouse::Hide();
+			}
 		}
+
 
 		// render flash UI for objects
 
@@ -982,7 +996,7 @@ static void DrawMenus()
 			}
 		}
 
-		if(hudMain && hudMain->isChatInputActive()) // also checks for write note, so do not hide mouse
+		if(hudMain && (hudMain->isChatInputActive() || hudMain->isPlayersListVisible())) // also checks for write note, so do not hide mouse
 			return;
 
 		// draw main hud with hidden mouse

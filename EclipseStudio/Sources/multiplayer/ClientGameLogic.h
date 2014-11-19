@@ -34,10 +34,15 @@ virtual	void		OnNetData(DWORD peerId, const r3dNetPacketHeader* packetData, int 
 	// list of players on server
 	struct PlayerName_s
 	{
-		int		reputation;
 		char	Gamertag[32*2];
+		int		plrRep;
 		bool	isLegend;
 		bool	isDev;
+		bool	isPunisher;
+		bool	isInvitePending;
+		bool    isMute;
+		bool    isPremium;
+
 	};
 	PlayerName_s	playerNames[256]; // playername by server peer index
 

@@ -166,9 +166,13 @@ void ClientGameLogic::Reset()
 	for(int i=0; i<R3D_ARRAYSIZE(playerNames); i++)
 	{
 		playerNames[i].Gamertag[0] = 0;
-		playerNames[i].reputation = 0;
+		playerNames[i].plrRep = 0;
 		playerNames[i].isLegend = false;
 		playerNames[i].isDev = false;
+		playerNames[i].isPunisher = false;
+		playerNames[i].isInvitePending = false;
+		playerNames[i].isMute = false;
+		playerNames[i].isPremium = false;
 	}
 	
 	// clearing scoping.  Particularly important for Spectator modes. 
@@ -484,15 +488,27 @@ IMPL_PACKET_FUNC(ClientGameLogic, PKT_S2C_PlayerNameJoined)
 {
 	r3d_assert(n.peerId < R3D_ARRAYSIZE(playerNames));
 	r3dscpy(playerNames[n.peerId].Gamertag, n.gamertag);
-	playerNames[n.peerId].reputation = n.reputation;
-	playerNames[n.peerId].isLegend = (n.flags & 1)?true:false;
-	playerNames[n.peerId].isDev = (n.flags & 2)?true:false;
+	playerNames[n.peerId].plrRep = n.reputation;
+	playerNames[n.peerId].isLegend   = (n.flags & 1)?true:false;
+	playerNames[n.peerId].isDev      = (n.flags & 2)?true:false;
+	playerNames[n.peerId].isPunisher = (n.flags & 3)?true:false;
+
+	playerNames[n.peerId].isMute = false;
+	//playerNames[n.peerId].isPremium = n.isPremium;
+	playerNames[n.peerId].isPremium = false;
 }
 
 IMPL_PACKET_FUNC(ClientGameLogic, PKT_S2C_PlayerNameLeft)
 {
 	r3d_assert(n.peerId < R3D_ARRAYSIZE(playerNames));
 	playerNames[n.peerId].Gamertag[0] = 0;
+	playerNames[n.peerId].plrRep = 0;
+	playerNames[n.peerId].isLegend = false;
+	playerNames[n.peerId].isDev = false;
+	playerNames[n.peerId].isPunisher = false;
+	playerNames[n.peerId].isInvitePending = false;
+	playerNames[n.peerId].isMute = false;
+	playerNames[n.peerId].isPremium = false;
 }
 
 IMPL_PACKET_FUNC(ClientGameLogic, PKT_S2C_CreatePlayer)

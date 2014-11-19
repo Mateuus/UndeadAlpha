@@ -42,6 +42,8 @@ public:
 	void	eventNoteWritePost(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 	void	eventNoteClosed(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 	void	eventNoteReportAbuse(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
+	void	eventShowPlayerListContextMenu(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
+	void	eventPlayerListAction(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 
 public:
 	HUDDisplay();
@@ -81,7 +83,9 @@ public:
 
 	// player list fn
 	void	clearPlayersList();
-	void	addPlayerToList(int num, const char* name, int reputation, bool isLegend, bool isDev);
+	//void	addPlayerToList(int num, const char* name, int reputation, bool isLegend, bool isDev);
+	void	addPlayerToList(int num, const char* name, int Reputation, bool isLegend, bool isDev, bool isPunisher, bool isInvitePending, bool isPremium,bool isMute, bool local);
+	
 	void	showPlayersList(int flag);
 	int		isPlayersListVisible() const {return playersListVisible;}
 
