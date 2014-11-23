@@ -32,6 +32,7 @@ enum sbpktType_e
   SBPKT_G2M_RemovePlayer,		// update info about game session
   SBPKT_G2M_FinishGame,			// game is finished
   SBPKT_G2M_CloseGame,			// close session
+  SBPKT_G2M_SendNoticeMsg,      // noticia para todos do game
   
   // data update packets
   SBPKT_G2M_DataUpdateReq,
@@ -113,6 +114,11 @@ struct SBPKT_G2M_FinishGame_s : public r3dNetPacketMixin<SBPKT_G2M_FinishGame>
 
 struct SBPKT_G2M_CloseGame_s : public r3dNetPacketMixin<SBPKT_G2M_CloseGame>
 {
+};
+
+struct SBPKT_G2M_SendNoticeMsg_s : public r3dNetPacketMixin<SBPKT_G2M_SendNoticeMsg>
+{
+	char msg[512];
 };
 
 struct SBPKT_G2M_DataUpdateReq_s : public r3dNetPacketMixin<SBPKT_G2M_DataUpdateReq>

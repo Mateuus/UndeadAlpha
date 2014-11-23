@@ -545,6 +545,31 @@ void CMasterGameServer::OnNetData(DWORD peerId, const r3dNetPacketHeader* Packet
       break;
     }
 
+	case SBPKT_G2M_SendNoticeMsg:
+		{
+			const SBPKT_G2M_SendNoticeMsg_s& n = *(SBPKT_G2M_SendNoticeMsg_s*)PacketData;
+			r3dOutToLog("Received notice message from peer%d '%s'\n",peerId,n.msg);
+
+			int numgames = 0;
+			for(CMasterGameServer::TSupersList::const_iterator it = gMasterGameServer.supers_.begin();
+				it != gMasterGameServer.supers_.end();
+				++it)
+			{
+				const CServerS* super = it->second;
+				numgames += super->GetExpectedGames();
+				for(int i=0; i<super->maxGames_; i++) 
+				{
+					const CServerG* game = super->games_[i].game;
+					if(!game) 
+						continue;
+					// Reenviar este pacote para todos os servidores.
+					net_->SendToPeer(&n, sizeof(n), game->peer_, true);
+				}
+			}
+			r3dOutToLog("Send notice packet to %d servers\n",numgames);
+			break;
+		}
+
   }
 
   return;

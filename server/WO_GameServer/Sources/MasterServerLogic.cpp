@@ -6,6 +6,8 @@
 	MasterServerLogic gMasterServerLogic;
 
 #include "../../MasterServer/Sources/NetPacketsServerBrowser.h"
+#include "ServerGameLogic.h"
+
 using namespace NetPacketsServerBrowser;
 
 #include "ObjectsCode/weapons/WeaponArmory.h"
@@ -132,6 +134,22 @@ void MasterServerLogic::OnNetData(DWORD peerId, const r3dNetPacketHeader* packet
       
       break;
     }
+
+	case SBPKT_G2M_SendNoticeMsg:
+	{
+			const SBPKT_G2M_SendNoticeMsg_s& n = *(SBPKT_G2M_SendNoticeMsg_s*)packetData;
+			r3d_assert(sizeof(n) == packetSize);
+			r3dOutToLog("Received notice packet from master. msg '%s' , brostcast to all players.\n",n.msg);
+			// brostcast by chat packet.
+			PKT_C2C_ChatMessage_s n1;
+			r3dscpy(n1.gamertag, "<SYSTEM>");
+			r3dscpy(n1.msg, n.msg);
+			n1.msgChannel = 1;
+			n1.userFlag = 2;
+			gServerLogic.p2pBroadcastToAll(NULL, &n1, sizeof(n1), true);
+			break;
+	}
+
   }
 
   return;
@@ -258,4 +276,24 @@ void MasterServerLogic::RequestDataUpdate()
 {
   SBPKT_G2M_DataUpdateReq_s n;
   net_->SendToHost(&n, sizeof(n), true);
+}
+
+void MasterServerLogic::SendNoticeMsg(const char* msg , ...)
+{
+	if(net_ == NULL)
+		return;
+
+	char buf[1024];
+
+	va_list ap;
+	va_start(ap, msg);
+	StringCbVPrintfA(buf, sizeof(buf), msg, ap);
+	va_end(ap);
+
+	CREATE_PACKET(SBPKT_G2M_SendNoticeMsg, n);
+	r3dscpy(n.msg,buf);
+	net_->SendToHost(&n, sizeof(n), true);
+
+	r3dOutToLog("BrostCast Notice Msg to all servers. '%s'\n",buf);
+	return;
 }

@@ -52,6 +52,7 @@ virtual	void		OnNetData(DWORD peerId, const r3dNetPacketHeader* packetData, int 
 	void		RegisterGame();
 	void		FinishGame();
 	void		CloseGame();
+	void        SendNoticeMsg(const char* msg , ...);
 
 	void		Tick();
 	

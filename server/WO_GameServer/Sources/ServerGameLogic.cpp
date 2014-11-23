@@ -732,7 +732,7 @@ void ServerGameLogic::p2pBroadcastToActive(const GameObject* from, DefaultPacket
 	return;
 }
 
-void ServerGameLogic::p2pBroadcastToAll(DefaultPacket* packetData, int packetSize, bool guaranteedAndOrdered)
+void ServerGameLogic::p2pBroadcastToAll(const GameObject* from, DefaultPacket* packetData, int packetSize, bool guaranteedAndOrdered)
 {
 	preparePacket(NULL, packetData);
 
@@ -1482,14 +1482,28 @@ IMPL_PACKET_FUNC(ServerGameLogic, PKT_C2S_Temp_Damage)
 int ServerGameLogic::ProcessChatCommand(obj_ServerPlayer* plr, const char* cmd)
 {
 	r3dOutToLog("cmd: %s admin:%d\n", cmd, plr->profile_.ProfileData.isDevAccount);
-	if(strncmp(cmd, "/tp", 3) == 0 && plr->profile_.ProfileData.isDevAccount)
+
+	if(plr->profile_.ProfileData.isDevAccount)
+	{
+
+	if(strncmp(cmd, "/tp", 3) == 0)
 		return Cmd_Teleport(plr, cmd);
 
-	if(strncmp(cmd, "/gi", 3) == 0 && plr->profile_.ProfileData.isDevAccount)
+	if(strncmp(cmd, "/gi", 3) == 0)
 		return Cmd_GiveItem(plr, cmd);
 		
-	if(strncmp(cmd, "/sv", 3) == 0 && plr->profile_.ProfileData.isDevAccount)
+	if(strncmp(cmd, "/sv", 3) == 0)
 		return Cmd_SetVitals(plr, cmd);
+
+	if(strncmp(cmd, "/notice", 4) == 0)
+		{
+			char notice[128];
+			char buf[128];
+			sscanf(cmd,"%s %[^\n]s",&buf,&notice);
+			gMasterServerLogic.SendNoticeMsg(notice);
+			return 0;
+		}
+	}
 	
 	return 1;	
 }
@@ -2060,7 +2074,7 @@ void ServerGameLogic::Tick()
 	    PKT_S2C_ShutdownNote_s n;
 	    n.reason   = 0;
 	    n.timeLeft = gMasterServerLogic.shutdownLeft_;
-	    p2pBroadcastToAll(&n, sizeof(n), true);
+	    p2pBroadcastToAll(NULL, &n, sizeof(n), true);
 	  }
 
 	  // close game when shutdown
