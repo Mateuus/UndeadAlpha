@@ -827,7 +827,7 @@ bool storecat_CanPlaceItemToSlot(const BaseItemConfig* itemCfg, int idx)
 	return canPlace;
 }
 
-bool obj_ServerPlayer::BackpackAddItem(const wiInventoryItem& wi1)
+/*bool obj_ServerPlayer::BackpackAddItem(const wiInventoryItem& wi1)
 {
 	// SPECIAL case - GOLD item
 	if(wi1.itemID == 'GOLD')
@@ -940,6 +940,161 @@ bool obj_ServerPlayer::BackpackAddItem(const wiInventoryItem& wi1)
 	
 	r3d_assert(false);
 	return false;
+}
+*/
+bool obj_ServerPlayer::BackpackAddItem(const wiInventoryItem& wi1)
+{
+    // SPECIAL case - GOLD item
+	if(wi1.itemID == 'GOLD')
+	{
+		//r3dOutToLog("%s BackpackAddItem %d GameDollars\n", userName, wi1.quantity); CLOG_INDENT;
+
+		profile_.ProfileData.GameDollars += wi1.quantity;
+
+		// report to client
+		PKT_S2C_BackpackAddNew_s n;
+		n.SlotTo = 0;
+		n.Item   = wi1;
+		gServerLogic.p2pSendToPeer(peerId_, this, &n, sizeof(n));
+		return true;
+	}
+
+
+    const WeaponAttachmentConfig* cfg = g_pWeaponArmory->getAttachmentConfig(wi1.itemID);
+
+
+    //r3dOutToLog("%s BackpackAddItem %dx%d\n", userName, wi1.itemID, wi1.quantity); CLOG_INDENT;
+    r3d_assert(wi1.itemID > 0);
+    //r3d_assert(wi1.quantity > 0);
+    
+    const BaseItemConfig* itemCfg = g_pWeaponArmory->getConfig(wi1.itemID);
+    if(!itemCfg) 
+    {
+        gServerLogic.LogCheat(peerId_, PKT_S2C_CheatWarning_s::CHEAT_Data, false, "BackpackAddItem",
+            "%d", wi1.itemID);
+        return false;
+    }
+    
+    int slot_exist = -1;
+    int slot_free  = -1;
+    
+    extern bool storecat_IsItemStackable(uint32_t ItemID);
+    bool isStackable = storecat_IsItemStackable(wi1.itemID);
+    for(int i=0; i<loadout_->BackpackSize; i++)
+    {
+        const wiInventoryItem& wi2 = loadout_->Items[i];
+
+
+        // can stack only non-modified items
+        if(isStackable && wi2.itemID == wi1.itemID && wi1.Var1 < 0 && wi2.Var1 < 0) 
+        {
+            slot_exist = i;
+            break;
+        }
+        
+        // check if we can place that item to loadout slot
+        bool canPlace = storecat_CanPlaceItemToSlot(itemCfg, i);
+        if(canPlace && wi2.itemID == 0 && slot_free == -1) 
+        {
+            slot_free = i;
+        }
+    }
+    
+    if(slot_exist == -1 && slot_free == -1)
+    {
+        PKT_S2C_BackpackModify_s n;
+        n.SlotTo = 0xFF;
+
+
+        gServerLogic.p2pSendToPeer(peerId_, this, &n, sizeof(n));
+        return false;
+    }
+
+
+    // check weight
+    //float totalWeight = loadout_->getTotalWeight();
+    //totalWeight += itemCfg->m_Weight*wi1.quantity;
+
+
+    const BackpackConfig* bc = g_pWeaponArmory->getBackpackConfig(loadout_->BackpackID);
+
+
+    if(slot_exist >= 0)
+    {
+        // modify backpack
+        r3d_assert(loadout_->Items[slot_exist].itemID == wi1.itemID);
+        loadout_->Items[slot_exist].quantity += wi1.quantity;
+        
+        // report to client
+        PKT_S2C_BackpackModify_s n;
+        n.SlotTo     = (BYTE)slot_exist;
+        n.Quantity   = (WORD)loadout_->Items[slot_exist].quantity;
+        n.dbg_ItemID = loadout_->Items[slot_exist].itemID;
+        gServerLogic.p2pSendToPeer(peerId_, this, &n, sizeof(n));
+        
+        OnBackpackChanged(slot_exist);
+
+
+        return true;
+    }
+
+
+    if(slot_free >= 0)
+    {
+        // modify backpack
+        r3d_assert(loadout_->Items[slot_free].itemID == 0);
+
+
+        // check if we can place that item to loadout slot
+        bool canPlace = storecat_CanPlaceItemToSlot(itemCfg, 6); // For armor
+        bool canPlace1 = storecat_CanPlaceItemToSlot(itemCfg, 7); // For helmet
+
+
+        if((wi1.itemID >= 20006 && wi1.itemID <= 20199) && canPlace && loadout_->Items[6].quantity == 0)
+        {
+           loadout_->Items[6] = wi1;
+           // report to client
+           PKT_S2C_BackpackAddNew_s n;
+           n.SlotTo = 6;
+           n.Item   = wi1;
+           gServerLogic.p2pSendToPeer(peerId_, this, &n, sizeof(n));
+
+
+           OnBackpackChanged(6);
+        }
+        else if((wi1.itemID >= 20006 && wi1.itemID <= 20199) && canPlace1 && loadout_->Items[7].quantity == 0)
+        {
+           loadout_->Items[7] = wi1;
+           // report to client
+           PKT_S2C_BackpackAddNew_s n;
+           n.SlotTo = 7;
+           n.Item   = wi1;
+           gServerLogic.p2pSendToPeer(peerId_, this, &n, sizeof(n));
+
+
+           OnBackpackChanged(6);
+        }
+        else
+        {
+           loadout_->Items[slot_free] = wi1;
+
+
+           // report to client
+           PKT_S2C_BackpackAddNew_s n;
+           n.SlotTo = (BYTE)slot_free;
+           n.Item   = wi1;
+           gServerLogic.p2pSendToPeer(peerId_, this, &n, sizeof(n));
+
+
+           OnBackpackChanged(slot_free);
+        }
+
+
+        return true;
+    }
+    
+    r3d_assert(false);
+    return false;
 }
 
 r3dPoint3D obj_ServerPlayer::GetRandomPosForItemDrop()

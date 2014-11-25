@@ -3202,8 +3202,16 @@ BOOL obj_Player::Update()
 		}
 		RecoilViewMod = R3D_LERP(RecoilViewMod, (RecoilViewMod+RecoilViewModTarget2), timePassed*2.0f);
 
-		if(RecoilCooldown>0)
-			RecoilCooldown = RecoilCooldown-timePassed;
+		if(RecoilCooldown>0 && m_Weapons[m_SelectedWeapon]->getCategory() == storecat_SNP) // Sniper recoil
+            RecoilViewModTarget = R3D_LERP(RecoilViewModTarget, r3dVector(0,0,0), R3D_MIN((timePassed)*GPP->c_fRecoilCooldownSpeed*.5f, 1.0f));
+
+
+        else if(RecoilCooldown>0)
+            RecoilCooldown = RecoilCooldown-timePassed;
+
+		/*if(RecoilCooldown>0)
+			RecoilCooldown = RecoilCooldown-timePassed;*/
+
 
 		if(RecoilCooldown<=0)
 		{
@@ -4454,6 +4462,15 @@ bool obj_Player::hasScopeMode() const
 		return false;
 
 	bool isFirstPerson = g_camera_mode->GetInt()==2 && NetworkLocal;
+
+	Weapon* wpn = m_Weapons[m_SelectedWeapon];
+    if(wpn)
+    {
+        if(!isFirstPerson && wpn->getCategory() != storecat_SNP && wpn->getItemID() != 101315 && wpn->getItemID() != 101319 && NetworkLocal)
+            return false;
+    }
+
+
 	return (m_Weapons[m_SelectedWeapon] && m_Weapons[m_SelectedWeapon]->hasScopeMode(isFirstPerson)); 
 }
 

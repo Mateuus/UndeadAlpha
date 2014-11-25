@@ -76,7 +76,11 @@ public:
 		float YMin;
 		float YMax;
 
+		r3dString CustomTintPath;
+
 		Settings();
+
+		int CustomTintEnabled;
 	};
 
 	// construction/ destruction
@@ -101,6 +105,7 @@ public:
 	void UpdateHeight( float x, float z, float radius );
 	void UpdateHeight();
 
+	void SetSettings( const Settings& sts );
 	void ResetBounds();
 
 	void Prepare() ;
@@ -121,6 +126,9 @@ public:
 	float GetTextureCellSize();
 
 	const Settings& GetSettings() const;
+
+	r3dTexture*		mCustomTintTexture;
+	void RefreshTintTexture();
 
 	// helpers
 private:

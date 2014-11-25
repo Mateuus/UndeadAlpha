@@ -6,6 +6,7 @@
 
 #include "GameCommon.h"
 
+#include "GameLevel.h"
 #include "GrassLib.h"
 #include "GrassGen.h"
 #include "GrassMap.h"
@@ -31,7 +32,7 @@ namespace
 	char GrazCellData_SIG105[] = "\3\3GRAZCELZ105";
 
 	char GrazCellTexesBlob_SIG[] = "\3\3GRAZTEXZ100";
-	
+
 
 	int P0_PIXEL_SHADER_ID				= -1;
 
@@ -46,7 +47,7 @@ namespace
 	typedef TArray< unsigned char > Bytes;
 
 	void ResizeTexture(	uint32_t oldTotalXLen, uint32_t oldTotalZLen, float oldExcessX, float oldExcessZ, const Bytes& oldCompoundTex,
-						uint32_t newTotalXLen, uint32_t newTotalZLen, float newExcessX, float newExcessZ, int OLD_TEX_DIM, int NEW_TEX_DIM, Bytes& newCompoundTex );
+		uint32_t newTotalXLen, uint32_t newTotalZLen, float newExcessX, float newExcessZ, int OLD_TEX_DIM, int NEW_TEX_DIM, Bytes& newCompoundTex );
 
 	void SaveTexture( FILE* fout, r3dTexture* tex, bool isMask );
 	void FillTexture( r3dTexture* tex, const Bytes& data, bool isMask );
@@ -109,7 +110,15 @@ GrassMap::GrassMap()
 , mDebugGrassType( -1 ) 
 , mCellSize( 0 )
 , mCellsPerTextureCell( 1 )
+, mCustomTintTexture( NULL )
 {
+	mSettings.CustomTintEnabled = 1;
+/*
+	mSettings.CustomTintEnabled = 0;
+#ifdef  FINAL_BUILD
+    mSettings.CustomTintEnabled = 1;
+#endif
+*/
 
 }
 
@@ -121,6 +130,38 @@ GrassMap::~GrassMap()
 }
 
 //------------------------------------------------------------------------
+
+void GrassMap::SetSettings( const Settings& sts )
+{
+	int needReloadTex = sts.CustomTintPath != mSettings.CustomTintPath;
+
+	mSettings = sts;
+
+	if( !mSettings.CustomTintEnabled )
+	{
+		if( mCustomTintTexture )
+		{
+			r3dRenderer->DeleteTexture( mCustomTintTexture );
+			mCustomTintTexture = NULL;
+		}
+	}
+	else
+	{
+		if( needReloadTex )
+		{
+			if( mCustomTintTexture )
+			{
+				r3dRenderer->DeleteTexture( mCustomTintTexture );
+				mCustomTintTexture = NULL;
+			}
+		}
+
+		if( !mCustomTintTexture )
+		{
+			mCustomTintTexture = r3dRenderer->LoadTexture( GetGrassPath( mSettings.CustomTintPath.c_str() ).c_str() );
+		}
+	}
+}
 
 void
 GrassMap::Init( float xoffset, float zoffset, float xsize, float zsize, int maxTexCellCount )
@@ -191,7 +232,34 @@ GrassMap::Close()
 	mCells.Resize( 0, 0 );
 	mTextureCells.Resize( 0, 0 );
 
+	if( mCustomTintTexture )
+	{
+		r3dRenderer->DeleteTexture( mCustomTintTexture );
+		mCustomTintTexture = NULL;
+	}
+
 	mInitialized = false;
+}
+
+void GrassMap::RefreshTintTexture()
+{
+
+//#ifdef  FINAL_BUILD
+    if (!strcmp( r3dGameLevel::GetHomeDir() , "Levels\\WZ_FrontEndLighting"))
+        mSettings.CustomTintPath = "tint_wz_front.dds";
+    
+    if (!strcmp( r3dGameLevel::GetHomeDir() , "Levels\\WZ_Colorado"))
+        mSettings.CustomTintPath = "tint_colorado_v2.dds";
+//#endif
+
+	if( mCustomTintTexture )
+	{
+		r3dRenderer->DeleteTexture( mCustomTintTexture );
+		mCustomTintTexture = NULL;
+	}
+
+	mCustomTintTexture = r3dRenderer->LoadTexture( GetGrassPath( mSettings.CustomTintPath.c_str() ).c_str() );
+
 }
 
 //------------------------------------------------------------------------
@@ -251,7 +319,7 @@ GrassMap::Load( const r3dString& levelHomeDir )
 		const r3dTerrainDesc& desc = Terrain->GetDesc() ;
 
 		if (	int( desc.XSize / mCellSize ) >  int( mSettings.XLength / mCellSize ) || 
-				int( desc.ZSize / mCellSize ) >  int( mSettings.ZLength / mCellSize ) )
+			int( desc.ZSize / mCellSize ) >  int( mSettings.ZLength / mCellSize ) )
 		{
 			Close();
 			Init( mSettings.XOffset, mSettings.ZOffset, desc.XSize, desc.ZSize, MAX_TEX_CELL_COUNT );
@@ -345,7 +413,7 @@ GrassMap::OptimizeMasks()
 
 					pixelSum *= 10;
 					pixelSum /= CELL_MASK_TEX_DIM * CELL_MASK_TEX_DIM;
-					
+
 					float avgPixel = pixelSum / 10.f;
 
 					bool do_optimize( false );
@@ -394,10 +462,10 @@ GrassMap::OptimizeMasks()
 	}
 
 	r3dOutToLog( "Grass saving: optimized %d out %d masked tiles ( %d blanks and %d uniforms )\n", 
-					optimizedBlank + optimizedUniform,
-					totalCount,
-					optimizedBlank,
-					optimizedUniform );
+		optimizedBlank + optimizedUniform,
+		totalCount,
+		optimizedBlank,
+		optimizedUniform );
 
 	r3dOutToLog( "Grass saving: optimized %d heightmaps\n", optimizedHeightmap );
 
@@ -520,12 +588,12 @@ GrassMap::UpdateHeight( float x, float z, float radius )
 	float relRad = radius / mCellSize;
 
 	for( int	iz	= R3D_MAX( upperLeftZ, 0 ), 
-				e	= R3D_MIN( lowerRightZ, (int)mTextureCells.Height() - 1 ); 
-				iz <= e; iz ++ )
+		e	= R3D_MIN( lowerRightZ, (int)mTextureCells.Height() - 1 ); 
+		iz <= e; iz ++ )
 	{
 		for( int	ix	= R3D_MAX( upperLeftX, 0 ), 
-					e	= R3D_MIN( lowerRightX, (int)mTextureCells.Width() - 1 ); 
-					ix <= e; ix ++ )
+			e	= R3D_MIN( lowerRightX, (int)mTextureCells.Width() - 1 ); 
+			ix <= e; ix ++ )
 		{
 			GrassTextureCell& cell = mTextureCells[ iz ][ ix ];
 
@@ -615,26 +683,42 @@ namespace
 R3D_FORCEINLINE static void PushDebugBBox( const r3dBoundBox& bbox )
 {
 	void PushDebugBox(	r3dPoint3D p0, r3dPoint3D p1, r3dPoint3D p2, r3dPoint3D p3,
-						r3dPoint3D p4, r3dPoint3D p5, r3dPoint3D p6, r3dPoint3D p7,
-						r3dColor color ) ;
+		r3dPoint3D p4, r3dPoint3D p5, r3dPoint3D p6, r3dPoint3D p7,
+		r3dColor color ) ;
 
 	PushDebugBox(	bbox.Org,
-					bbox.Org + r3dPoint3D( bbox.Size.x, 0.f, 0.f ),
-					bbox.Org + r3dPoint3D( 0.f, bbox.Size.y, 0.f ), 
-					bbox.Org + r3dPoint3D( bbox.Size.x, bbox.Size.y, 0.f ), 
-					bbox.Org + r3dPoint3D( 0.f, 0.f, bbox.Size.z ), 
-					bbox.Org + r3dPoint3D( bbox.Size.x, 0.f, bbox.Size.z ),
-					bbox.Org + r3dPoint3D( 0.f, bbox.Size.y, bbox.Size.z ), 
-					bbox.Org + r3dPoint3D( bbox.Size.x, bbox.Size.y, bbox.Size.z ),
-					r3dColor( 0, 255, 0 )
-					) ;
+		bbox.Org + r3dPoint3D( bbox.Size.x, 0.f, 0.f ),
+		bbox.Org + r3dPoint3D( 0.f, bbox.Size.y, 0.f ), 
+		bbox.Org + r3dPoint3D( bbox.Size.x, bbox.Size.y, 0.f ), 
+		bbox.Org + r3dPoint3D( 0.f, 0.f, bbox.Size.z ), 
+		bbox.Org + r3dPoint3D( bbox.Size.x, 0.f, bbox.Size.z ),
+		bbox.Org + r3dPoint3D( 0.f, bbox.Size.y, bbox.Size.z ), 
+		bbox.Org + r3dPoint3D( bbox.Size.x, bbox.Size.y, bbox.Size.z ),
+		r3dColor( 0, 255, 0 )
+		) ;
 }
 
 void
 GrassMap::Prepare()
 {
-	if( Terrain )
-		Terrain->UpdateOrthoDiffuseTexture();
+	if( mSettings.CustomTintEnabled )
+	{
+		if( !mCustomTintTexture )
+		{
+			RefreshTintTexture();
+		}
+	}
+	else
+	{
+		if( mCustomTintTexture )
+		{
+			r3dRenderer->DeleteTexture( mCustomTintTexture );
+			mCustomTintTexture = NULL;
+		}
+
+		if( Terrain )
+			Terrain->UpdateOrthoDiffuseTexture();
+	}
 }
 
 void
@@ -687,8 +771,8 @@ GrassMap::Draw( const r3dCamera& cam, Path path, bool useDepthEqual, bool drawTo
 	r3dPoint3D maxMeshScaleVec ( maxMeshScale, maxMeshScale, maxMeshScale );
 
 	r3dPoint3D cellScaleBase (	mCellSize + maxMeshScale * 2, 
-								mCellSize + maxMeshScale * 2,
-								mCellSize + maxMeshScale * 2 );
+		mCellSize + maxMeshScale * 2,
+		mCellSize + maxMeshScale * 2 );
 
 	//------------------------------------------------------------------------
 	// Setup common render states
@@ -731,13 +815,25 @@ GrassMap::Draw( const r3dCamera& cam, Path path, bool useDepthEqual, bool drawTo
 		D3D_V( r3dRenderer->pd3ddev->SetRenderState( D3DRS_ZFUNC, D3DCMP_EQUAL ) ) ;
 	}
 
-	r3dTexture *tex = __r3dShadeTexture[2];
-	if ( Terrain )
+	enum
 	{
-		tex = Terrain->GetDesc().OrthoDiffuseTex ;
+		TINT_TEX_SLOT = 1
+	};
+
+	if( mSettings.CustomTintEnabled )
+	{
+		r3dRenderer->SetTex( mCustomTintTexture, TINT_TEX_SLOT );
 	}
-	r3dRenderer->SetTex( tex, 1 );
-	r3dSetFiltering( R3D_BILINEAR, 1 );
+	else
+	{
+		r3dTexture *tex = __r3dShadeTexture[2];
+		if ( Terrain )
+		{
+			tex = Terrain->GetDesc().OrthoDiffuseTex ;
+		}
+		r3dRenderer->SetTex( tex, 1 );
+		r3dSetFiltering( R3D_BILINEAR, 1 );
+	}
 
 	//------------------------------------------------------------------------
 
@@ -834,7 +930,7 @@ GrassMap::ConformWithNewCellSize()
 	}
 
 	typedef TArray< Bytes > CompoundTextures;
-		
+
 	CompoundTextures compoundTexes ( g_pGrassLib->GetEntryCount() );
 
 	for( uint32_t i = 0, e = compoundTexes.Count(); i < e; i ++ )
@@ -919,7 +1015,7 @@ GrassMap::ConformWithNewCellSize()
 		Bytes newCompoundTex ( newTotalXLen * newTotalZLen );
 
 		ResizeTexture(	totalXLen, totalZLen, oldExcessX, oldExcessZ, compoundTexes[ i ],
-						newTotalXLen, newTotalZLen, newExcessX, newExcessZ, CELL_MASK_TEX_DIM, CELL_MASK_TEX_DIM, newCompoundTex );
+			newTotalXLen, newTotalZLen, newExcessX, newExcessZ, CELL_MASK_TEX_DIM, CELL_MASK_TEX_DIM, newCompoundTex );
 
 		CreateCells( newCompoundTex, i );
 	}
@@ -1028,7 +1124,7 @@ void GrassMap::SetupCellArrays( int nominzalCellsX, int nominzalCellsZ, int maxT
 	mTextureCells.Resize( texCellsX, texCellsZ );
 
 	mCells.Resize(	mTextureCells.Width() * mCellsPerTextureCell, 
-					mTextureCells.Height() * mCellsPerTextureCell );
+		mTextureCells.Height() * mCellsPerTextureCell );
 }
 
 //------------------------------------------------------------------------
@@ -1615,8 +1711,8 @@ void GrassMap::DrawCell( const GrassTextureCell& gtc, int TexX, int TexZ, const 
 			vConsts[10].w = 1.0f - vConsts[10].w;
 
 			D3DXVECTOR3 vCamDir = -D3DXVECTOR3(	r3dRenderer->ViewMatrix._13, 
-												r3dRenderer->ViewMatrix._23,
-												r3dRenderer->ViewMatrix._33 );
+				r3dRenderer->ViewMatrix._23,
+				r3dRenderer->ViewMatrix._33 );
 
 			D3DXVECTOR3 vNormal = vCamDir;
 
@@ -1702,7 +1798,7 @@ void GrassMap::DrawCell( const GrassTextureCell& gtc, int TexX, int TexZ, const 
 	r3dRenderer->RestoreCullMode();
 
 	D3DPERF_EndEvent ();
-	
+
 }
 
 //------------------------------------------------------------------------
@@ -1911,39 +2007,39 @@ GrassMap::LoadCellData( const r3dString& FilePath )
 		return LoadCellData_104_105( fin, true );
 	}
 	else
-	if( !strcmp( GrazCellData_SIG104, compSig ) )
-	{
-		return LoadCellData_104_105( fin, false );
-	}
-	else
-	if( !strcmp( GrazCellData_SIG103, compSig ) )
-	{
-		return LoadCellData_103( fin );
-	}
-	else
-	if( !strcmp( GrazCellData_SIG102, compSig ) )
-	{
-		return LoadCellData_102( fin );
-	}
-	else
-	{
-		if( strcmp( GrazCellData_SIG101, compSig )!=0 )
+		if( !strcmp( GrazCellData_SIG104, compSig ) )
 		{
-			if( strcmp( GrazCellData_SIG101_2, compSig )!=0 )
-			{
-				r3dArtBug( "GrassMap::LoadCellData: file %s has unsuppotrted version( current is %s but got %s )!\n", FilePath.c_str(), GrazCellData_SIG101, compSig );
-				return false;
-			}
+			return LoadCellData_104_105( fin, false );
 		}
 		else
-		{
-			fseek( fin, (int)sizeof GrazCellData_SIG101 - (int) sizeof GrazCellData_SIG101_2, SEEK_CUR );
-		}
+			if( !strcmp( GrazCellData_SIG103, compSig ) )
+			{
+				return LoadCellData_103( fin );
+			}
+			else
+				if( !strcmp( GrazCellData_SIG102, compSig ) )
+				{
+					return LoadCellData_102( fin );
+				}
+				else
+				{
+					if( strcmp( GrazCellData_SIG101, compSig )!=0 )
+					{
+						if( strcmp( GrazCellData_SIG101_2, compSig )!=0 )
+						{
+							r3dArtBug( "GrassMap::LoadCellData: file %s has unsuppotrted version( current is %s but got %s )!\n", FilePath.c_str(), GrazCellData_SIG101, compSig );
+							return false;
+						}
+					}
+					else
+					{
+						fseek( fin, (int)sizeof GrazCellData_SIG101 - (int) sizeof GrazCellData_SIG101_2, SEEK_CUR );
+					}
 
-		return LoadCellData_101( fin );
-	}
+					return LoadCellData_101( fin );
+				}
 
-	return false;
+				return false;
 }
 
 //------------------------------------------------------------------------
@@ -2223,11 +2319,11 @@ GrassMap::LoadCellData_102( r3dFile* fin )
 	float newExcessZ	=  mTextureCells.Height() - mSettings.ZLength / mCellSize / mCellsPerTextureCell;
 
 	Bytes resizedData( newTotalX * newTotalZ );
-	
+
 	for( int i = 0, e = compoundMasks.Count(); i < e; i ++ )
 	{
 		ResizeTexture(	compoundWidth, compoundHeight, oldExcessX, oldExcessZ, compoundMasks[ i ].Data,
-						newTotalX, newTotalZ, newExcessX, newExcessZ, 32, CELL_MASK_TEX_DIM, resizedData );
+			newTotalX, newTotalZ, newExcessX, newExcessZ, 32, CELL_MASK_TEX_DIM, resizedData );
 
 		compoundMasks[ i ].Data = resizedData;
 	}
@@ -2539,7 +2635,7 @@ bool GrassMap::LoadCellData_103( r3dFile* fin )
 #endif
 
 		ResizeTexture(	compoundWidth, compoundHeight, oldExcessX, oldExcessZ, compoundMasks[ i ].Data,
-						newTotalX, newTotalZ, newExcessX, newExcessZ, 32, CELL_MASK_TEX_DIM, resizedData );
+			newTotalX, newTotalZ, newExcessX, newExcessZ, 32, CELL_MASK_TEX_DIM, resizedData );
 
 #if 0
 		prms.compHeigh = newTotalZ;
@@ -2701,13 +2797,13 @@ bool GrassMap::LoadCellData_104_105( r3dFile* fin, bool is105 )
 
 	// if this fails need to append resize code
 	r3d_assert( texCellsX == mTextureCells.Width() 
-					&&
-				texCellsZ == mTextureCells.Height() );
+		&&
+		texCellsZ == mTextureCells.Height() );
 
 	bool hasActiveCells = false;
 
 	Bytes heightTexData;
-	
+
 	if( !is105 )
 		heightTexData.Resize( heightTexDim * heightTexDim * 1 );
 
@@ -3048,7 +3144,7 @@ void AnimateGrass()
 
 	PrevClock = newClock;
 
-	Time += r_grass_anim_speed->GetFloat() * delta / CLOCKS_PER_SEC;
+	Time += 3.f * delta / CLOCKS_PER_SEC;
 
 	Time = fmodf( Time, R3D_PI * 2 );
 }
@@ -3127,14 +3223,14 @@ namespace
 		float tz = z - (float)z0;
 
 		return 		lerp( 
-						lerp( s00, s10, tx ),
-							lerp( s01, s11, tx ),
-								tz
-									);
+			lerp( s00, s10, tx ),
+			lerp( s01, s11, tx ),
+			tz
+			);
 	}
 
 	void ResizeTexture(	uint32_t oldTotalXLen, uint32_t oldTotalZLen, float oldExcessX, float oldExcessZ, const Bytes& oldCompoundTex,
-						uint32_t newTotalXLen, uint32_t newTotalZLen, float newExcessX, float newExcessZ, int OLD_TEX_DIM, int NEW_TEX_DIM, Bytes& newCompoundTex )
+		uint32_t newTotalXLen, uint32_t newTotalZLen, float newExcessX, float newExcessZ, int OLD_TEX_DIM, int NEW_TEX_DIM, Bytes& newCompoundTex )
 	{
 		uint32_t oldEffectiveXLen = oldTotalXLen - uint32_t( oldExcessX * OLD_TEX_DIM );
 		uint32_t oldEffectiveZLen = oldTotalZLen - uint32_t( oldExcessZ * OLD_TEX_DIM );

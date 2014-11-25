@@ -10734,6 +10734,7 @@ r3dVector GetMouseAndGrassPlanesIntersection()
 //////////////////////////////////////////////////////////////////////////
 
 int g_GrassPlaneDrawState = 0;
+float g_GrassTintTextureOffset        = 0.f;
 
 float ProcessGrassConfigure( float SliderX, float SliderY )
 {
@@ -11105,6 +11106,77 @@ float ProcessGrassConfigure( float SliderX, float SliderY )
 	}
 
 	r_grass_show_boxes->SetInt( grazBox ) ;
+
+	if( g_pGrassMap )
+    {
+        GrassMap::Settings sts = g_pGrassMap->GetSettings();
+
+
+        sts.CustomTintEnabled = !!sts.CustomTintEnabled;
+
+
+        SliderY += imgui_Checkbox( SliderX, SliderY, "Custom Grass Tint", &sts.CustomTintEnabled, 1 );
+
+
+        sts.CustomTintEnabled = !!sts.CustomTintEnabled;
+
+
+        if( sts.CustomTintEnabled )
+        {
+            static char SelectedTex[ MAX_PATH ] = { 0 };
+
+
+            if( sts.CustomTintPath.Length() )
+            {
+                strcpy( SelectedTex, sts.CustomTintPath.c_str() );
+            }
+
+
+            if( imgui_FileList( SliderX, SliderY, DEFAULT_CONTROLS_WIDTH, 87, GetGrassPath( "*.dds" ).c_str(), SelectedTex, &g_GrassTintTextureOffset ) )
+            {
+                sts.CustomTintPath = SelectedTex;
+            }
+
+
+            SliderY += 87;
+        }
+        else
+        {
+            if( Terrain && !Terrain->GetDesc().OrthoDiffuseTex )
+            {
+                r3dOutToLog( "Rebuilding Terrain Ortho Diffuse Tex because it wasn't there!\n" );
+
+
+                Terrain->SetOrthoDiffuseTextureDirty();
+                Terrain->UpdateOrthoDiffuseTexture();
+            }
+
+
+            if( Terrain && Terrain->GetDesc().OrthoDiffuseTex )
+            {
+                if( imgui_Button( SliderX, SliderY, 360.f, 22.f, "Export Automatic Tint" ) )
+                {
+                    r3dString path = GetGrassPath( "autotint.dds" );
+
+
+                    if( D3DXSaveTextureToFile( path.c_str(), D3DXIFF_DDS, Terrain->GetDesc().OrthoDiffuseTex->AsTex2D(), NULL ) == D3D_OK )
+                    {
+                        MessageBoxA( r3dRenderer->HLibWin, ( "Saved to " + path ).c_str(), "Success", MB_OK );
+                    }
+                    else
+                    {
+                        MessageBoxA( r3dRenderer->HLibWin, ( "Failed to save to" + path ).c_str(), "Failure", MB_ICONERROR );
+                    }
+                }
+            }
+
+
+            SliderY += 24.f;
+        }
+
+
+        g_pGrassMap->SetSettings( sts );
+    }
 
 	if( Terrain )
 	{
