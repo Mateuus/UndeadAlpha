@@ -857,7 +857,7 @@ void HUDDisplay::showSafeZoneWarning(bool flag)
 	if(SafeZoneWarningVisible != flag)
 	{
 		SafeZoneWarningVisible = flag;
-		gfxHUD.Invoke("_root.Main.SafeZoneWarning.gotoAndPlay", flag?"in":"out");
+		gfxHUD.Invoke("_root.Main.Condition.gotoAndPlay", flag ? 0 : 8); //"in":"out"
 	}
 }
 
