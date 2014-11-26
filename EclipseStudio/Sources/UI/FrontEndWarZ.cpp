@@ -1,6 +1,17 @@
 #include "r3dPCH.h"
 #include "r3d.h"
 
+#include <string>
+#include <iostream>
+#include <assert.h>
+#include <stdio.h>
+#include <winsock2.h>
+#include <process.h>
+#include <ShellAPI.h>
+#include <psapi.h>
+#include <tlhelp32.h>
+#include <DbgHelp.h>
+
 #include "GameCommon.h"
 #include "r3dDebug.h"
 
@@ -106,9 +117,6 @@ FrontendWarZ::FrontendWarZ(const char * movieName)
 
 	prevGameResult = GRESULT_Unknown;
 
-	asyncThread_ = NULL;
-	asyncErr_[0] = 0;
-
 	CancelQuickJoinRequest = false;
   	exitRequested_      = false;
   	needExitByGameJoin_ = false;
@@ -144,7 +152,6 @@ FrontendWarZ::FrontendWarZ(const char * movieName)
 
 FrontendWarZ::~FrontendWarZ()
 {
-	r3d_assert(asyncThread_ == NULL);
 	r3d_assert(loginThread == NULL);
 
 	if(m_Player)
@@ -699,6 +706,8 @@ bool FrontendWarZ::Initialize()
 	gfxMovie.RegisterEventHandler("eventClanRespondToInvite", MAKE_CALLBACK(eventClanRespondToInvite));	
 	gfxMovie.RegisterEventHandler("eventClanBuySlots", MAKE_CALLBACK(eventClanBuySlots));	
 	gfxMovie.RegisterEventHandler("eventClanApplyToJoin", MAKE_CALLBACK(eventClanApplyToJoin));	
+	gfxMovie.RegisterEventHandler("eventRequestLeaderboardData", MAKE_CALLBACK(eventRequestLeaderboardData));	
+
 
 	return true;
 }
@@ -1075,7 +1084,8 @@ int FrontendWarZ::Update()
 
 	GameWorld().Update();
 
-	ProcessAsyncOperation();
+	async_.ProcessAsyncOperation(this, gfxMovie);
+	market_.update();
 
 	gfxMovie.SetCurentRTViewport( Scaleform::GFx::Movie::SM_ExactFit );
 
@@ -1121,7 +1131,7 @@ int FrontendWarZ::Update()
 		needUpdateSettings_ = false;
 	}
 
-	if(gMasterServerLogic.IsConnected() && asyncThread_ == NULL)
+	if(gMasterServerLogic.IsConnected() && !async_.Processing() && !market_.processing())
 	{
 		if(r3dGetTime() > masterConnectTime_ + _p2p_idleTime)
 		{
@@ -1140,7 +1150,7 @@ int FrontendWarZ::Update()
 		}
 	}
 
-	if(asyncThread_ == NULL)
+	if(!async_.Processing() && !market_.processing())
 	{
 		bool IsNeedExit();
 		if(IsNeedExit())
@@ -1247,67 +1257,6 @@ void FrontendWarZ::drawPlayer()
 	r3dRenderer->SetPixelShader();
 }
 
-void FrontendWarZ::StartAsyncOperation(fn_thread threadFn, fn_finish finishFn)
-{
-	r3d_assert(asyncThread_ == NULL);
-
-	asyncFinish_ = finishFn;
-	asyncErr_[0] = 0;
-	asyncThread_ = (HANDLE)_beginthreadex(NULL, 0, threadFn, this, 0, NULL);
-	if(asyncThread_ == NULL)
-		r3dError("Failed to begin thread");
-}
-
-void FrontendWarZ::SetAsyncError(int apiCode, const wchar_t* msg)
-{
-	if(gMasterServerLogic.shuttingDown_)
-	{
-		swprintf(asyncErr_, sizeof(asyncErr_), L"%s", gLangMngr.getString("MSShutdown1"));
-		return;
-	}
-
-	if(apiCode == 0) {
-		swprintf(asyncErr_, sizeof(asyncErr_), L"%s", msg);
-	} else {
-		swprintf(asyncErr_, sizeof(asyncErr_), L"%s, code:%d", msg, apiCode);
-	}
-}
-
-void FrontendWarZ::ProcessAsyncOperation()
-{
-	if(asyncThread_ == NULL)
-		return;
-
-	DWORD w0 = WaitForSingleObject(asyncThread_, 0);
-	if(w0 == WAIT_TIMEOUT) 
-		return;
-
-	CloseHandle(asyncThread_);
-	asyncThread_ = NULL;
-	
-	if(gMasterServerLogic.badClientVersion_)
-	{
-		Scaleform::GFx::Value args[2];
-		args[0].SetStringW(gLangMngr.getString("ClientMustBeUpdated"));
-		args[1].SetBoolean(true);
-		gfxMovie.Invoke("_root.api.showInfoMsg", args, 2);		
-		//@TODO: on infoMsg closing, exit app.
-		return;
-	}
-
-	if(asyncErr_[0]) 
-	{
-		Scaleform::GFx::Value args[2];
-		args[0].SetStringW(asyncErr_);
-		args[1].SetBoolean(true);
-		gfxMovie.Invoke("_root.api.showInfoMsg", args, 2);		
-		return;
-	}
-	
-	if(asyncFinish_)
-		(this->*asyncFinish_)();
-}
-
 void FrontendWarZ::addClientSurvivor(const wiCharDataFull& slot, int slotIndex)
 {
 	Scaleform::GFx::Value var[23];
@@ -1384,6 +1333,7 @@ void FrontendWarZ::InitButtons()
 void FrontendWarZ::initFrontend()
 {
 	initItems();
+	market_.initialize(&gfxMovie);
 
 	// send survivor info
 	Scaleform::GFx::Value var[20];
@@ -1476,7 +1426,7 @@ void FrontendWarZ::eventPlayGame(r3dScaleformMovie* pMovie, const Scaleform::GFx
 	if(gUserProfile.ProfileData.NumSlots == 0)
 		return;
 		
-	StartAsyncOperation(&FrontendWarZ::as_PlayGameThread);
+	async_.StartAsyncOperation(this, &FrontendWarZ::as_PlayGameThread);
 }
 
 void FrontendWarZ::eventCancelQuickGameSearch(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount)
@@ -1521,7 +1471,7 @@ void FrontendWarZ::eventCreateCharacter(r3dScaleformMovie* pMovie, const Scalefo
 	var[1].SetBoolean(false);
 	gfxMovie.Invoke("_root.api.showInfoMsg", var, 2);
 
-	StartAsyncOperation(&FrontendWarZ::as_CreateCharThread, &FrontendWarZ::OnCreateCharSuccess);
+	async_.StartAsyncOperation(this, &FrontendWarZ::as_CreateCharThread, &FrontendWarZ::OnCreateCharSuccess);
 }
 
 void FrontendWarZ::eventDeleteChar(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount)
@@ -1531,7 +1481,7 @@ void FrontendWarZ::eventDeleteChar(r3dScaleformMovie* pMovie, const Scaleform::G
 	var[1].SetBoolean(false);
 	gfxMovie.Invoke("_root.api.showInfoMsg", var, 2);
 
-	StartAsyncOperation(&FrontendWarZ::as_DeleteCharThread, &FrontendWarZ::OnDeleteCharSuccess);
+	async_.StartAsyncOperation(this, &FrontendWarZ::as_DeleteCharThread, &FrontendWarZ::OnDeleteCharSuccess);
 }
 
 void FrontendWarZ::eventReviveChar(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount)
@@ -1541,30 +1491,12 @@ void FrontendWarZ::eventReviveChar(r3dScaleformMovie* pMovie, const Scaleform::G
 	var[1].SetBoolean(false);
 	gfxMovie.Invoke("_root.api.showInfoMsg", var, 2);
 
-	StartAsyncOperation(&FrontendWarZ::as_ReviveCharThread, &FrontendWarZ::OnReviveCharSuccess);
+	async_.StartAsyncOperation(this, &FrontendWarZ::as_ReviveCharThread, &FrontendWarZ::OnReviveCharSuccess);
 }
 
 void FrontendWarZ::eventBuyItem(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount)
 {
-	mStore_BuyItemID = args[0].GetUInt(); // legsID
-	mStore_BuyPrice = args[1].GetInt();
-	mStore_BuyPriceGD = args[2].GetInt();
-
-	if(gUserProfile.ProfileData.GameDollars < mStore_BuyPriceGD || gUserProfile.ProfileData.GamePoints < mStore_BuyPrice)
-	{
-		Scaleform::GFx::Value var[2];
-		var[0].SetStringW(gLangMngr.getString("NotEnougMoneyToBuyItem"));
-		var[1].SetBoolean(true);
-		gfxMovie.Invoke("_root.api.showInfoMsg", var, 2);
-		return;
-	}
-
-	Scaleform::GFx::Value var[2];
-	var[0].SetStringW(gLangMngr.getString("OneMomentPlease"));
-	var[1].SetBoolean(false);
-	gfxMovie.Invoke("_root.api.showInfoMsg", var, 2);
-
-	StartAsyncOperation(&FrontendWarZ::as_BuyItemThread, &FrontendWarZ::OnBuyItemSuccess);
+	market_.eventBuyItem(pMovie, args, argCount);
 }
 
 void FrontendWarZ::DelayServerRequest()
@@ -1587,7 +1519,7 @@ bool FrontendWarZ::ConnectToMasterServer()
 	gMasterServerLogic.Disconnect();
 	if(!gMasterServerLogic.StartConnect(_p2p_masterHost, _p2p_masterPort))
 	{
-		SetAsyncError(0, gLangMngr.getString("NoConnectionToMasterServer"));
+		async_.SetAsyncError(0, gLangMngr.getString("NoConnectionToMasterServer"));
 		return false;
 	}
 
@@ -1613,7 +1545,7 @@ bool FrontendWarZ::ConnectToMasterServer()
 			break;
 	}
 	
-	SetAsyncError(8, gLangMngr.getString("TimeoutToMasterServer"));
+	async_.SetAsyncError(8, gLangMngr.getString("TimeoutToMasterServer"));
 	return false;
 }
 
@@ -1627,34 +1559,34 @@ bool FrontendWarZ::ParseGameJoinAnswer()
 		needExitByGameJoin_ = true;
 		return true;
 	case GBPKT_M2C_JoinGameAns_s::rNoGames:
-		SetAsyncError(0, gLangMngr.getString("JoinGameNoGames"));
+		async_.SetAsyncError(0, gLangMngr.getString("JoinGameNoGames"));
 		return false;
 	case GBPKT_M2C_JoinGameAns_s::rGameFull:
-		SetAsyncError(0, gLangMngr.getString("GameIsFull"));
+		async_.SetAsyncError(0, gLangMngr.getString("GameIsFull"));
 		return false;
 	case GBPKT_M2C_JoinGameAns_s::rGameFinished:
-		SetAsyncError(0, gLangMngr.getString("GameIsAlmostFinished"));
+		async_.SetAsyncError(0, gLangMngr.getString("GameIsAlmostFinished"));
 		return false;
 	case GBPKT_M2C_JoinGameAns_s::rGameNotFound:
-		SetAsyncError(0, gLangMngr.getString("GameNotFound"));
+		async_.SetAsyncError(0, gLangMngr.getString("GameNotFound"));
 		return false;
 	case GBPKT_M2C_JoinGameAns_s::rWrongPassword:
-		SetAsyncError(0, gLangMngr.getString("WrongPassword"));
+		async_.SetAsyncError(0, gLangMngr.getString("WrongPassword"));
 		return false;
 	case GBPKT_M2C_JoinGameAns_s::rLevelTooLow:
-		SetAsyncError(0, gLangMngr.getString("GameTooLow"));
+		async_.SetAsyncError(0, gLangMngr.getString("GameTooLow"));
 		return false;
 	case GBPKT_M2C_JoinGameAns_s::rLevelTooHigh:
-		SetAsyncError(0, gLangMngr.getString("GameTooHigh"));
+		async_.SetAsyncError(0, gLangMngr.getString("GameTooHigh"));
 		return false;
 	case GBPKT_M2C_JoinGameAns_s::rJoinDelayActive:
-		SetAsyncError(0, gLangMngr.getString("JoinDelayActive"));
+		async_.SetAsyncError(0, gLangMngr.getString("JoinDelayActive"));
 		return false;
 	}
 
 	wchar_t buf[128];
 	swprintf(buf, 128, gLangMngr.getString("UnableToJoinGameCode"), gMasterServerLogic.gameJoinAnswer_.result);
-	SetAsyncError(0, buf);
+	async_.SetAsyncError(0, buf);
 	return  false;
 }
 
@@ -1705,7 +1637,7 @@ unsigned int WINAPI FrontendWarZ::as_PlayGameThread(void* in_data)
 		}
 	}
 		
-	This_->SetAsyncError(0, gLangMngr.getString("TimeoutJoiningGame"));
+	This_->async_.SetAsyncError(0, gLangMngr.getString("TimeoutJoiningGame"));
 	This_->needReturnFromQuickJoin = true;
 	return 0;
 }
@@ -1742,7 +1674,7 @@ unsigned int WINAPI FrontendWarZ::as_JoinGameThread(void* in_data)
 		}
 	}
 		
-	This_->SetAsyncError(0, gLangMngr.getString("TimeoutJoiningGame"));
+	This_->async_.SetAsyncError(0, gLangMngr.getString("TimeoutJoiningGame"));
 	return 0;
 }
 
@@ -1758,10 +1690,10 @@ unsigned int WINAPI FrontendWarZ::as_CreateCharThread(void* in_data)
 	{
 		if(apiCode == 9)
 		{
-			This->SetAsyncError(0, L"This name is already in use");
+			This->async_.SetAsyncError(0, gLangMngr.getString("ThisNameIsAlreadyInUse"));
 		}
 		else
-			This->SetAsyncError(apiCode, L"Create Character fail");
+			This->async_.SetAsyncError(apiCode, gLangMngr.getString("CreateCharacterFail"));
 		return 0;
 	}
 
@@ -1799,9 +1731,9 @@ unsigned int WINAPI FrontendWarZ::as_DeleteCharThread(void* in_data)
 	if(apiCode != 0)
 	{
 		if(apiCode == 7)
-			This->SetAsyncError(0, L"Cannot delete character that is the leader of the clan");
+			This->async_.SetAsyncError(0, gLangMngr.getString("CannotDeleteCharThatIsClanLeader"));
 		else
-			This->SetAsyncError(apiCode, L"Failed to delete character");
+			This->async_.SetAsyncError(apiCode, gLangMngr.getString("FailedToDeleteChar"));
 		return 0;
 	}
 
@@ -1829,7 +1761,7 @@ unsigned int WINAPI FrontendWarZ::as_ReviveCharThread(void* in_data)
 	int apiCode = gUserProfile.ApiCharRevive();
 	if(apiCode != 0)
 	{
-		This->SetAsyncError(apiCode, L"ApiCharRevive failed");
+		This->async_.SetAsyncError(apiCode, gLangMngr.getString("FailedToReviveChar"));
 		return 0;
 	}
 
@@ -2066,14 +1998,14 @@ unsigned int WINAPI FrontendWarZ::as_BuyItemThread(void* in_data)
 	int buyIdx = This->StoreDetectBuyIdx();
 	if(buyIdx == 0)
 	{
-		This->SetAsyncError(-1, L"buy item fail, cannot locate buy index");
+		//async_.SetAsyncError(-1, L"buy item fail, cannot locate buy index");
 		return 0;
 	}
 
 	int apiCode = gUserProfile.ApiBuyItem(This->mStore_BuyItemID, buyIdx, &This->m_inventoryID);
 	if(apiCode != 0)
 	{
-		This->SetAsyncError(apiCode, L"buy item fail");
+	//	async_.SetAsyncError(apiCode, L"buy item fail");
 		return 0;
 	}
 
@@ -2286,7 +2218,7 @@ void FrontendWarZ::eventBackpackFromInventory(r3dScaleformMovie* pMovie, const S
 			return;
 		}
 
-		StartAsyncOperation(&FrontendWarZ::as_BackpackFromInventorySwapThread, &FrontendWarZ::OnBackpackFromInventorySuccess);
+		async_.StartAsyncOperation(this, &FrontendWarZ::as_BackpackFromInventorySwapThread, &FrontendWarZ::OnBackpackFromInventorySuccess);
 	}
 	else
 	{
@@ -2309,7 +2241,7 @@ void FrontendWarZ::eventBackpackFromInventory(r3dScaleformMovie* pMovie, const S
 			return;
 		}
 
-		StartAsyncOperation(&FrontendWarZ::as_BackpackFromInventoryThread, &FrontendWarZ::OnBackpackFromInventorySuccess);
+		async_.StartAsyncOperation(this, &FrontendWarZ::as_BackpackFromInventoryThread, &FrontendWarZ::OnBackpackFromInventorySuccess);
 	}
 }
 
@@ -2325,9 +2257,9 @@ unsigned int WINAPI FrontendWarZ::as_BackpackFromInventorySwapThread(void* in_da
 	if(apiCode != 0)
 	{
 		if(apiCode==7)
-			This->SetAsyncError(0, gLangMngr.getString("GameSessionHasNotClosedYet"));
+			This->async_.SetAsyncError(0, gLangMngr.getString("GameSessionHasNotClosedYet"));
 		else
-			This->SetAsyncError(apiCode, L"ApiBackpackToInventory failed");
+			This->async_.SetAsyncError(apiCode, gLangMngr.getString("BackpackToInventoryFail"));
 		return 0;
 	}
 
@@ -2335,9 +2267,9 @@ unsigned int WINAPI FrontendWarZ::as_BackpackFromInventorySwapThread(void* in_da
 	if(apiCode != 0)
 	{
 		if(apiCode==7)
-			This->SetAsyncError(0, gLangMngr.getString("GameSessionHasNotClosedYet"));
+			This->async_.SetAsyncError(0, gLangMngr.getString("GameSessionHasNotClosedYet"));
 		else
-			This->SetAsyncError(apiCode, L"ApiBackpackFromInventory failed");
+			This->async_.SetAsyncError(apiCode, gLangMngr.getString("FailedToFindBackpack"));
 		return 0;
 	}
 
@@ -2356,9 +2288,9 @@ unsigned int WINAPI FrontendWarZ::as_BackpackFromInventoryThread(void* in_data)
 	if(apiCode != 0)
 	{
 		if(apiCode==7)
-			This->SetAsyncError(0, gLangMngr.getString("GameSessionHasNotClosedYet"));
+			This->async_.SetAsyncError(0, gLangMngr.getString("GameSessionHasNotClosedYet"));
 		else
-			This->SetAsyncError(apiCode, L"ApiBackpackFromInventory failed");
+			This->async_.SetAsyncError(apiCode, gLangMngr.getString("BackpackFromInventoryFail"));
 		return 0;
 	}
 
@@ -2406,7 +2338,7 @@ void FrontendWarZ::eventBackpackToInventory(r3dScaleformMovie* pMovie, const Sca
 	var[1].SetBoolean(false);
 	gfxMovie.Invoke("_root.api.showInfoMsg", var, 2);
 
-	StartAsyncOperation(&FrontendWarZ::as_BackpackToInventoryThread, &FrontendWarZ::OnBackpackToInventorySuccess);
+	async_.StartAsyncOperation(this, &FrontendWarZ::as_BackpackToInventoryThread, &FrontendWarZ::OnBackpackToInventorySuccess);
 }
 
 unsigned int WINAPI FrontendWarZ::as_BackpackToInventoryThread(void* in_data)
@@ -2420,9 +2352,9 @@ unsigned int WINAPI FrontendWarZ::as_BackpackToInventoryThread(void* in_data)
 	if(apiCode != 0)
 	{
 		if(apiCode==7)
-			This->SetAsyncError(0, gLangMngr.getString("GameSessionHasNotClosedYet"));
+			This->async_.SetAsyncError(0, gLangMngr.getString("GameSessionHasNotClosedYet"));
 		else
-			This->SetAsyncError(apiCode, L"ApiBackpackToInventory failed");
+			This->async_.SetAsyncError(apiCode, gLangMngr.getString("BackpackToInventoryFail"));
 		return 0;
 	}
 
@@ -2458,7 +2390,7 @@ void FrontendWarZ::eventBackpackGridSwap(r3dScaleformMovie* pMovie, const Scalef
 	var[1].SetBoolean(false);
 	gfxMovie.Invoke("_root.api.showInfoMsg", var, 2);
 
-	StartAsyncOperation(&FrontendWarZ::as_BackpackGridSwapThread, &FrontendWarZ::OnBackpackGridSwapSuccess);
+	async_.StartAsyncOperation(this, &FrontendWarZ::as_BackpackGridSwapThread, &FrontendWarZ::OnBackpackGridSwapSuccess);
 }
 
 void FrontendWarZ::eventSetSelectedChar(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount)
@@ -2568,7 +2500,7 @@ void FrontendWarZ::eventChangeBackpack(r3dScaleformMovie* pMovie, const Scalefor
 	gfxMovie.Invoke("_root.api.showInfoMsg", var, 2);		
 
 	mChangeBackpack_inventoryID = inventoryID;
-	StartAsyncOperation(&FrontendWarZ::as_BackpackChangeThread, &FrontendWarZ::OnBackpackChangeSuccess);
+	async_.StartAsyncOperation(this, &FrontendWarZ::as_BackpackChangeThread, &FrontendWarZ::OnBackpackChangeSuccess);
 }
 
 unsigned int WINAPI FrontendWarZ::as_BackpackChangeThread(void* in_data)
@@ -2581,7 +2513,7 @@ unsigned int WINAPI FrontendWarZ::as_BackpackChangeThread(void* in_data)
 	int apiCode = gUserProfile.ApiChangeBackpack(This->mChangeBackpack_inventoryID);
 	if(apiCode != 0)
 	{
-		This->SetAsyncError(apiCode, L"Backpack change failed");
+		This->async_.SetAsyncError(apiCode, gLangMngr.getString("FailedToFindBackpack"));
 		return 0;
 	}
 
@@ -2648,9 +2580,9 @@ unsigned int WINAPI FrontendWarZ::as_BackpackGridSwapThread(void* in_data)
 	if(apiCode != 0)
 	{
 		if(apiCode==7)
-			This->SetAsyncError(0, gLangMngr.getString("GameSessionHasNotClosedYet"));
+			This->async_.SetAsyncError(0, gLangMngr.getString("GameSessionHasNotClosedYet"));
 		else
-			This->SetAsyncError(apiCode, L"ApiBackpackGridSwap failed");
+			This->async_.SetAsyncError(apiCode, gLangMngr.getString("SwitchBackpackSameBackpacks"));
 		return 0;
 	}
 
@@ -3231,7 +3163,7 @@ void FrontendWarZ::eventBrowseGamesJoin(r3dScaleformMovie* pMovie, const Scalefo
 	var[2].SetString("");
 	gfxMovie.Invoke("_root.api.showInfoMsg", var, 3);
 
-	StartAsyncOperation(&FrontendWarZ::as_JoinGameThread);
+	async_.StartAsyncOperation(this, &FrontendWarZ::as_JoinGameThread);
 }
 void FrontendWarZ::eventBrowseGamesOnAddToFavorites(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount)
 {
@@ -3257,7 +3189,7 @@ void FrontendWarZ::eventBrowseGamesRequestList(r3dScaleformMovie* pMovie, const 
 	if(strcmp(args[0].GetString(), "browse")==0)
 	{
 		m_browseGamesMode = 0;
-		StartAsyncOperation(&FrontendWarZ::as_BrowseGamesThread, &FrontendWarZ::OnGameListReceived);
+		async_.StartAsyncOperation(this, &FrontendWarZ::as_BrowseGamesThread, &FrontendWarZ::OnGameListReceived);
 	}
 	else
 	{
@@ -3305,7 +3237,7 @@ unsigned int WINAPI FrontendWarZ::as_BrowseGamesThread(void* in_data)
 			break;
 	}
 
-	This->SetAsyncError(0, gLangMngr.getString("FailedReceiveGameList"));
+	This->async_.SetAsyncError(0, gLangMngr.getString("FailedReceiveGameList"));
 	return 0;
 }
 
@@ -3949,7 +3881,7 @@ void FrontendWarZ::eventCreateClan(r3dScaleformMovie* pMovie, const Scaleform::G
 	var[1].SetBoolean(false);
 	gfxMovie.Invoke("_root.api.showInfoMsg", var, 2);
 
-	StartAsyncOperation(&FrontendWarZ::as_CreateClanThread, &FrontendWarZ::OnCreateClanSuccess);
+	async_.StartAsyncOperation(this, &FrontendWarZ::as_CreateClanThread, &FrontendWarZ::OnCreateClanSuccess);
 }
 
 unsigned int WINAPI FrontendWarZ::as_CreateClanThread(void* in_data)
@@ -3959,12 +3891,29 @@ unsigned int WINAPI FrontendWarZ::as_CreateClanThread(void* in_data)
 
 	CUserClans* clans = gUserProfile.clans[gUserProfile.SelectedCharID];
 	int api = clans->ApiClanCreate(This->clanCreateParams);
-	if(api!=0)
+if(api!=0)
 	{
-		if(api == 27)
-			This->SetAsyncError(0, L"Clan with the same name already exists");
-		else
-			This->SetAsyncError(api, L"Failed to create clan");
+		switch (api)
+		{
+		case 1:
+			This->async_.SetAsyncError(0, gLangMngr.getString("ClanNameNoSpecSymbols"));
+			break;
+		case 2:
+			This->async_.SetAsyncError(0, gLangMngr.getString("ClanTagNoSpecSymbols"));
+			break;
+		case 27:
+			This->async_.SetAsyncError(0, gLangMngr.getString("ClanError_Code27"));
+			break;
+		case 28:
+			This->async_.SetAsyncError(0, gLangMngr.getString("ClanError_Code28"));
+			break;
+		case 29:
+			This->async_.SetAsyncError(0, gLangMngr.getString("ClanError_Code29"));
+			break;
+		default:
+			This->async_.SetAsyncError(api, gLangMngr.getString("FailedToCreateClan"));
+			break;
+		}
 		return 0;
 	}
 	return 1;
@@ -4389,4 +4338,150 @@ void FrontendWarZ::eventClanApplyToJoin(r3dScaleformMovie* pMovie, const Scalefo
 		var[1].SetBoolean(true);
 		gfxMovie.Invoke("_root.api.showInfoMsg", var, 2);
 	}
+}
+
+const char* FrontendWarZ::FindClanTagAndColorById(int id ,char* name,CUserClans* clan)
+{
+	if (id == 0) return name;
+
+	for(std::list<CUserClans::ClanInfo_s>::iterator iter=clan->leaderboard_.begin(); iter!=clan->leaderboard_.end(); ++iter)
+	{
+		CUserClans::ClanInfo_s& clanInfo = *iter;
+		
+		if (clanInfo.ClanID == id)
+		{
+			const char* tagColor = "#000000";
+			switch(clanInfo.ClanTagColor)
+			{
+			case 1: tagColor = "#aa0000"; break;
+			case 2: tagColor = "#a6780c"; break;
+			case 3: tagColor = "#10a49e"; break;
+			case 4: tagColor = "#20a414"; break;
+			case 5: tagColor = "#104ea4"; break;
+			case 6: tagColor = "#9610a4"; break;
+			case 7: tagColor = "#444444"; break;
+			case 8: tagColor = "#a4a4a4"; break;
+			default:
+				break;
+			}
+			char gamertag[512] = {0};
+			sprintf(gamertag,"%s",name);
+			sprintf(name,"<font color='%s'>[%s]</font>%s",tagColor,clanInfo.ClanTag,gamertag);
+			break;
+		}
+	}
+	
+	return name;
+}
+
+
+unsigned int WINAPI FrontendWarZ::as_LeaderBoardThread(void* in_data)
+{
+	FrontendWarZ* This = (FrontendWarZ*)in_data;
+	int curPos = 1;
+	gUserProfile.ApiGetLeaderboard(This->hardcore, This->type, This->m_leaderboardPage, curPos, This->m_leaderboardPageCount);
+	CUserClans* clan = new CUserClans();
+	This->clansmem = clan;
+	//clan->ApiClanGetLeaderboard();
+
+	return This->clansmem->ApiClanGetLeaderboard();
+}
+
+void FrontendWarZ::OnLeaderBoardDataSuccess()
+{
+	int curPos = 1;
+
+	Scaleform::GFx::Value var[4];
+	for(std::vector<CClientUserProfile::LBEntry_s>::iterator it = gUserProfile.m_lbData[type].begin(); it != gUserProfile.m_lbData[type].end(); ++it)
+	{
+		//public function addLeaderboardData(param1:uint, param2:String, param3:Boolean, param4:String)
+		CClientUserProfile::LBEntry_s& lbe = *it;
+		var[0].SetUInt(curPos++ + ((m_leaderboardPage*100)-100));
+		var[1].SetString(FindClanTagAndColorById(lbe.ClanId,lbe.gamertag,clansmem));
+		var[2].SetBoolean(lbe.alive ? true : false);
+
+		std::stringstream ss;
+		if (type == 1)
+		{
+			ss << getTimePlayedString(lbe.data);
+		}
+		else
+		{
+			ss << lbe.data;
+		}
+		std::string temp = ss.str();
+		var[3].SetString(temp.c_str());
+
+		gfxMovie.Invoke("_root.api.Main.LeaderboardAnim.addLeaderboardData", var, 4);
+	}
+
+	switch (type)
+	{
+	case 0:
+		gfxMovie.Invoke("_root.api.Main.LeaderboardAnim.setLeaderboardText", gLangMngr.getString("$FR_LB_TOP_XP"));
+		break;
+	case 1:
+		gfxMovie.Invoke("_root.api.Main.LeaderboardAnim.setLeaderboardText", gLangMngr.getString("$FR_LB_TOP_ST"));
+		break;
+	case 2:
+		gfxMovie.Invoke("_root.api.Main.LeaderboardAnim.setLeaderboardText", gLangMngr.getString("$FR_LB_TOP_KZ"));
+		break;
+	case 3:
+		gfxMovie.Invoke("_root.api.Main.LeaderboardAnim.setLeaderboardText", gLangMngr.getString("$FR_LB_TOP_KS"));
+		break;
+	case 4:
+		gfxMovie.Invoke("_root.api.Main.LeaderboardAnim.setLeaderboardText", gLangMngr.getString("$FR_LB_TOP_KB"));
+		break;
+	case 5: // fall-through
+	case 6:
+		gfxMovie.Invoke("_root.api.Main.LeaderboardAnim.setLeaderboardText", gLangMngr.getString("$FR_LB_TOP_RT"));
+		break;
+	default:
+		r3d_assert(false);
+	}
+
+	//delete clan;
+
+	gfxMovie.Invoke("_root.api.Main.LeaderboardAnim.populateLeaderboard", 0);
+	gfxMovie.Invoke("_root.api.hideInfoMsg", "");
+}
+
+void FrontendWarZ::eventRequestLeaderboardData(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount)
+{
+	r3d_assert(argCount == 3);
+
+	hardcore = args[0].GetInt();
+	r3d_assert(hardcore == 0 || hardcore == 1);
+
+	type = args[1].GetInt();
+	r3d_assert(type >= 0 && type <= 6);
+
+	pageType = args[2].GetInt();
+	r3d_assert(pageType >= 0 && pageType <= 3);
+
+	const int rowsPerPage = 1; 
+	switch (pageType)
+	{
+	case 0:
+	case 1: // fall-through
+		m_leaderboardPage = 1;
+		break;
+	case 2: // Previous
+		m_leaderboardPage = std::max(1, m_leaderboardPage - 1);
+		break;
+	case 3: // Next
+		m_leaderboardPage = std::min(m_leaderboardPageCount, m_leaderboardPage + 1);
+		break;
+	}
+
+	gfxMovie.Invoke("_root.api.Main.LeaderboardAnim.clearLeaderboardList", 0);
+
+	//gUserProfile.ApiGetLeaderboard(hardcore, type, m_leaderboardPage, curPos, m_leaderboardPageCount);
+
+	Scaleform::GFx::Value var[2];
+	var[0].SetStringW(gLangMngr.getString("OneMomentPlease"));
+	var[1].SetBoolean(false);
+	gfxMovie.Invoke("_root.api.showInfoMsg", var, 2);
+
+	async_.StartAsyncOperation(this, &FrontendWarZ::as_LeaderBoardThread, &FrontendWarZ::OnLeaderBoardDataSuccess);
 }

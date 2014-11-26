@@ -333,11 +333,25 @@ class CClientUserProfile : public CUserProfile
 	struct LBEntry_s
 	{
 	  char		gamertag[64];
-	  bool		havePremium;
-	  wiStats	stats;
+	  int		alive;
+	  int		data;
+	  int       ClanId;
 	};
-	std::vector<LBEntry_s> m_lbData[4];
-	int		ApiGetLeaderboard(int TableID, int StartPos, int* out_CurPos);
+
+	struct TSEntry_s
+	{
+	  float  amount;
+	  int    itemID;
+	  char   time[128];
+	  char   type[128];
+	  int    id;
+	  float  balance;
+	};
+
+	std::vector<TSEntry_s> m_tsData;
+	std::vector<LBEntry_s> m_lbData[7];
+
+	int		ApiGetLeaderboard(int hardcore, int type, int page, int& out_startPos, int& out_pageCount);
 	
 	// mystery box
 	struct MysteryLoot_s

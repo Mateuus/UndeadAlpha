@@ -58,6 +58,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include <sstream>
 #include <hash_map>
 #include <unordered_map>
 #include <unordered_set>

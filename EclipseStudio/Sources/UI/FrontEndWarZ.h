@@ -1,6 +1,9 @@
 #pragma once
 
 #include "UIMenu.h"
+#include "UIAsync.h"
+#include "UIMarket.h"
+
 #include "../../ServerNetPackets/NetPacketsGameBrowser.h"
 
 #include "CkHttp.h"
@@ -126,6 +129,18 @@ private:
 	void eventClanRespondToInvite(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 	void eventClanBuySlots(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 	void eventClanApplyToJoin(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
+	void eventRequestLeaderboardData(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
+	void OnLeaderBoardDataSuccess();
+
+	static unsigned int WINAPI as_LeaderBoardThread(void* in_data);
+	int hardcore;
+	int type;
+	int pageType;
+	int m_leaderboardPage;
+	int m_leaderboardPageCount;
+
+	CUserClans* clansmem;
+    const char* FindClanTagAndColorById(int id ,char* str,CUserClans* clan);
 
 	void checkForInviteFromClan();
 	void setClanInfo();
@@ -159,8 +174,8 @@ private:
 	//
 	// Async Function Calls
 	//
-	typedef void (FrontendWarZ::*fn_finish)();
-	typedef unsigned int (WINAPI *fn_thread)(void*);
+	UIAsync<FrontendWarZ> async_;
+	UIMarket market_;
 
 	float		lastServerReqTime_;
 	void		DelayServerRequest();
@@ -169,13 +184,6 @@ private:
 	bool		ParseGameJoinAnswer();
 	volatile bool CancelQuickJoinRequest;
 
-	fn_finish	asyncFinish_;
-	HANDLE		asyncThread_;
-	wchar_t		asyncErr_[512];
-
-	void		StartAsyncOperation(fn_thread threadFn, fn_finish finishFn = NULL);
-	void		SetAsyncError(int apiCode, const wchar_t* msg);
-	void		ProcessAsyncOperation();
 
 	static unsigned int WINAPI as_CreateCharThread(void* in_data);
 	void		OnCreateCharSuccess();

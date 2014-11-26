@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="Eclipse Studio"
 	ProjectGUID="{22AD274B-9E09-431E-94D7-41780F91B239}"
 	RootNamespace="Studio"
@@ -1609,6 +1609,26 @@
 				</File>
 				<File
 					RelativePath=".\Sources\UI\HUDPause.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Sources\UI\UIAsync.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Sources\UI\UIItemInventory.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Sources\UI\UIItemInventory.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Sources\UI\UIMarket.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Sources\UI\UIMarket.h"
 					>
 				</File>
 				<File

@@ -1143,13 +1143,14 @@ int CClientUserProfile::ApiFriendGetStats(DWORD friendId)
 	return 0;
 }
 
-int CClientUserProfile::ApiGetLeaderboard(int TableID, int StartPos, int* out_CurPos)
+int CClientUserProfile::ApiGetLeaderboard(int hardcore, int type, int page, int& out_startPos, int& out_pageCount)
 {
-	r3d_assert(TableID >= 0 && TableID <= 3);
-	
+	r3d_assert(type >= 0 && type <= 6);
+
 	CWOBackendReq req(this, "api_LeaderboardGet.aspx");
-	req.AddParam("t", TableID);
-	req.AddParam("pos", StartPos);
+	req.AddParam("Type", type);
+	req.AddParam("Hardcore", hardcore);
+	req.AddParam("Page", page);
 
 	if(!req.Issue())
 	{
@@ -1161,24 +1162,22 @@ int CClientUserProfile::ApiGetLeaderboard(int TableID, int StartPos, int* out_Cu
 	req.ParseXML(xmlFile);
 	
 	pugi::xml_node xmlLeaderboard = xmlFile.child("leaderboard");
-	*out_CurPos = xmlLeaderboard.attribute("pos").as_int();
-	int LbSize = xmlLeaderboard.attribute("size").as_int(); // for future use
-	m_lbData[TableID].reserve(100);
-	m_lbData[TableID].clear();
+	out_startPos = xmlLeaderboard.attribute("pos").as_int();
+	out_pageCount = xmlLeaderboard.attribute("pc").as_int();
+
+	m_lbData[type].reserve(100);
+	m_lbData[type].clear();
 
 	pugi::xml_node xmlItem = xmlLeaderboard.first_child();
 	while(!xmlItem.empty())
 	{
 		LBEntry_s lb;
-		r3dscpy(lb.gamertag, xmlItem.attribute("GT").value());
-		lb.stats.XP          = xmlItem.attribute("XP").as_uint();
-		lb.stats.Kills       = xmlItem.attribute("k").as_uint();
-		lb.stats.Deaths      = xmlItem.attribute("d").as_uint();
-		lb.stats.ShotsFired  = xmlItem.attribute("f").as_uint();
-		lb.stats.ShotsHits   = xmlItem.attribute("h").as_uint();
-		lb.stats.TimePlayed  = xmlItem.attribute("t").as_uint();
-		lb.havePremium       = xmlItem.attribute("p").as_bool();
-		m_lbData[TableID].push_back(lb);
+		r3dscpy(lb.gamertag, xmlItem.attribute("gt").value());
+		lb.alive = xmlItem.attribute("a").as_int();
+		lb.data = xmlItem.attribute("d").as_int();
+		lb.ClanId = xmlItem.attribute("cid").as_int();
+
+		m_lbData[type].push_back(lb);
 
 		xmlItem = xmlItem.next_sibling();
 	}
