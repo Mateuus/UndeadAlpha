@@ -32,6 +32,17 @@ public:
 
 	virtual int Update();
 
+	void InitButtons();
+	int  CurrentBrowse;
+
+	int OficialServersNumber;
+	int PrivateServersNumber;
+	int PremiumServersNumber;
+	int StrongHoldsServersNumber;
+	int PublicServersNumber;
+	int VeteranServersNumber;
+	int TrialServersNumber;
+
 	void postLoginStepInit(EGameResult gameResult);
 	void initLoginStep(const wchar_t* loginErrorMsg);
 
@@ -95,6 +106,7 @@ private:
 	void eventOpenBackpackSelector(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 	void eventChangeBackpack(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 
+	void eventSetCurrentBrowseChannel(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 	void eventBrowseGamesRequestFilterStatus(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 	void eventBrowseGamesSetFilter(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 	void eventBrowseGamesJoin(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
