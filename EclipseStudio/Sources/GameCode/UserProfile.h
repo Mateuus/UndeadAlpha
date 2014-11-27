@@ -79,6 +79,9 @@ struct wiStats
 	int		TimePlayed;
 	int		Reputation;
 
+	//SkillSystem
+	int		SkillXPPool;
+
 	// generic trackable stats
 	int		KilledZombies;	// normal zombie kills
 	int		KilledSurvivors;
@@ -315,6 +318,9 @@ class CClientUserProfile : public CUserProfile
 	int		ApiCharCreate(const char* Gamertag, int Hardcore, int HeroItemID, int HeadIdx, int BodyIdx, int LegsIdx);
 	int		ApiCharDelete();
 	int		ApiCharRevive();
+
+	//Skillsystem
+	int		ApiLearnSkill(uint32_t skillid, int CharID);
 
 	// client backpack APIs
 	int		ApiBackpackToInventory(int GridFrom, int amount);

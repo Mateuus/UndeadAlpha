@@ -139,6 +139,13 @@ private:
 	int m_leaderboardPage;
 	int m_leaderboardPageCount;
 
+	//Skill System Thanks InvasionMMO
+	void eventLearnSkill(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
+	void OnLearnSkillSuccess();
+	static unsigned int WINAPI as_LearnSkilLThread(void* in_data);
+	uint32_t skillid;
+	int	CharID;
+
 	CUserClans* clansmem;
     const char* FindClanTagAndColorById(int id ,char* str,CUserClans* clan);
 

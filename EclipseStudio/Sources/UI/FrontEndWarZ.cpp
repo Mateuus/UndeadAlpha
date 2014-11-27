@@ -659,6 +659,7 @@ bool FrontendWarZ::Initialize()
 	gfxMovie.SetCurentRTViewport( Scaleform::GFx::Movie::SM_ExactFit );
 
 #define MAKE_CALLBACK(FUNC) new r3dScaleformMovie::TGFxEICallback<FrontendWarZ>(this, &FrontendWarZ::FUNC)
+	gfxMovie.RegisterEventHandler("eventLearnSkill", MAKE_CALLBACK(eventLearnSkill));
 	gfxMovie.RegisterEventHandler("eventPlayGame", MAKE_CALLBACK(eventPlayGame));
 	gfxMovie.RegisterEventHandler("eventCancelQuickGameSearch", MAKE_CALLBACK(eventCancelQuickGameSearch));
 	gfxMovie.RegisterEventHandler("eventQuitGame", MAKE_CALLBACK(eventQuitGame));
@@ -1419,6 +1420,116 @@ void FrontendWarZ::initFrontend()
 		}
 	}
 	prevGameResult = GRESULT_Unknown;
+
+	{
+		//public function addSkillInfo(arg1:uint, arg2:String, arg3:String, arg4:String, arg5:String, arg6:uint):*
+		//loc1, "skill" + loc1, "desc" + loc1, "skill/skill.png", "skill/skillBW.png", 100 + loc1 * 10
+		//this.SkillData.push({"id":arg1, "name":arg2, "desc":arg3, "icon":arg4, "iconBW":arg5, "cost":arg6});
+		Scaleform::GFx::Value var[6];
+		for(int i=0; i<34; ++i)
+		{
+			char skill[256];
+			char skillbw[256];
+			char skillname[256];
+			char skilldesc[256];
+			sprintf(skill, "$Data/Menu/skillIcons/Skill%d.dds", i);
+			sprintf(skillbw, "$Data/Menu/skillIcons/Skill%dBW.dds", i);
+			sprintf(skillname, "SkillName%d", i);
+			sprintf(skilldesc, "SkillDesc%d", i);
+			var[0].SetInt(i);
+			var[1].SetStringW(gLangMngr.getString(skillname));
+			var[2].SetStringW(gLangMngr.getString(skilldesc));
+			var[3].SetString(skill);
+			var[4].SetString(skillbw);
+			var[5].SetInt(1000 + i * 10);
+			gfxMovie.Invoke("_root.api.addSkillInfo", var, 6);
+		}
+	}
+}
+
+void FrontendWarZ::eventLearnSkill(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount)
+{
+	// Skillsystem
+	skillid = args[0].GetUInt();
+	const wiCharDataFull& slot = gUserProfile.ProfileData.ArmorySlots[gUserProfile.SelectedCharID];
+	CharID = slot.LoadoutID;
+
+	Scaleform::GFx::Value var[2];
+	var[0].SetStringW(gLangMngr.getString("SkillSystem : Running API..."));
+	var[1].SetBoolean(false);
+	gfxMovie.Invoke("_root.api.showInfoMsg", var, 2);
+	r3dOutToLog("SkillSystem : Running API...\n");
+	//Sleep(3000);
+	async_.StartAsyncOperation(this, &FrontendWarZ::as_LearnSkilLThread, &FrontendWarZ::OnLearnSkillSuccess);
+}
+void FrontendWarZ::OnLearnSkillSuccess()
+{
+
+	const wiCharDataFull& slot = gUserProfile.ProfileData.ArmorySlots[gUserProfile.SelectedCharID];
+
+	Scaleform::GFx::Value var[2];	
+
+	char tmpGamertag[128];
+	if(slot.ClanID != 0)
+		sprintf(tmpGamertag, "[%s] %s", slot.ClanTag, slot.Gamertag);
+	else
+		r3dscpy(tmpGamertag, slot.Gamertag);
+
+
+	var[0].SetString(tmpGamertag);
+	var[1].SetInt(skillid);
+
+
+	gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var, 2);
+
+	updateInventoryAndSkillItems();
+	const wiCharDataFull& slot2 = gUserProfile.ProfileData.ArmorySlots[gUserProfile.SelectedCharID];
+	Scaleform::GFx::Value var2[11];
+	var2[0].SetString(tmpGamertag);
+	var2[1].SetNumber(slot2.Health);
+	var2[2].SetNumber(slot2.Stats.XP);
+	var2[3].SetNumber(slot2.Stats.TimePlayed);
+	var2[4].SetNumber(slot2.Alive);
+	var2[5].SetNumber(slot2.Hunger);
+	var2[6].SetNumber(slot2.Thirst);
+	var2[7].SetNumber(slot2.Toxic);
+	var2[8].SetNumber(slot2.BackpackID);
+	var2[9].SetNumber(slot2.BackpackSize);
+	var2[10].SetNumber(slot2.Stats.SkillXPPool);
+	gfxMovie.Invoke("_root.api.updateClientSurvivor", var2, 11);
+	gfxMovie.Invoke("_root.api.Main.SkillTree.refreshSkillTree", ""); //[Krit] Refresh Skill Tree When Learn Skill Success
+	gfxMovie.Invoke("_root.api.hideInfoMsg", "");
+
+	return;
+}
+
+unsigned int WINAPI FrontendWarZ::as_LearnSkilLThread(void* in_data)
+{
+	//Skillsystem
+	r3dThreadAutoInstallCrashHelper crashHelper;
+	FrontendWarZ* This = (FrontendWarZ*)in_data;
+
+	This->async_.DelayServerRequest();
+	int apiCode = gUserProfile.ApiLearnSkill(This->skillid, This->CharID);
+	r3dOutToLog("SkillSystem : Learn Skill...\n");
+
+	if(apiCode == 50){
+		This->async_.SetAsyncError(0, gLangMngr.getString("FailedToLearnSkill"));
+		r3dOutToLog("SkillSystem : Learn Skill Failed Code : 50\n");
+		r3dOutToLog("SkillSystem : Close Thread\n");
+		r3dOutToLog("SkillSystem : Closed\n");
+		return 0;
+	}
+	else
+	{
+		r3dOutToLog("SkillSystem : Learn Skill Success\n");
+		r3dOutToLog("SkillSystem : Close Thread\n");
+		r3dOutToLog("SkillSystem : Closed\n");
+	}
+
+
+
+	return 1;
 }
 
 void FrontendWarZ::eventPlayGame(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount)

@@ -1235,4 +1235,18 @@ int CClientUserProfile::ApiMysteryBoxGetContent(int itemId, const MysteryBox_s**
 	return 0;
 }
 
+int CClientUserProfile::ApiLearnSkill(uint32_t skillid, int CharID)
+{
+	CWOBackendReq req(this, "api_SrvSkills.aspx");
+	req.AddParam("func", "add");
+	req.AddParam("CharID", CharID);
+	req.AddParam("SkillID", skillid);
+	if(!req.Issue())
+	{
+		return 50;
+	}
+	GetProfile();
+	return skillid;
+}
+
 #endif // ! WO_SERVER
