@@ -81,6 +81,11 @@ struct wiStats
 
 	//SkillSystem
 	int		SkillXPPool;
+	int		skillid0, skillid1, skillid2, skillid3, skillid4, skillid5, skillid6, skillid7,
+			skillid8, skillid9, skillid10, skillid11, skillid12, skillid13, skillid14, skillid15,
+			skillid16, skillid17, skillid18, skillid19, skillid20, skillid21, skillid22, skillid23,
+			skillid24, skillid25, skillid26, skillid27, skillid28, skillid29, skillid30, skillid31,
+			skillid32, skillid33;
 
 	// generic trackable stats
 	int		KilledZombies;	// normal zombie kills

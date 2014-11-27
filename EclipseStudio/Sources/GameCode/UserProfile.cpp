@@ -269,6 +269,42 @@ void CUserProfile::ParseLoadouts(pugi::xml_node& xmlItem)
 		st.KilledBandits   = xmlItem.attribute("ts02").as_int();
 
 		xmlItem = xmlItem.next_sibling();
+
+		// skills
+		st.skillid0 = xmlItem.attribute("SkillID0").as_int();
+		st.skillid1 = xmlItem.attribute("SkillID1").as_int();
+		st.skillid2 = xmlItem.attribute("SkillID2").as_int();
+		st.skillid3 = xmlItem.attribute("SkillID3").as_int();
+		st.skillid4 = xmlItem.attribute("SkillID4").as_int();
+		st.skillid5 = xmlItem.attribute("SkillID5").as_int();
+		st.skillid6 = xmlItem.attribute("SkillID6").as_int();
+		st.skillid7 = xmlItem.attribute("SkillID7").as_int();
+		st.skillid8 = xmlItem.attribute("SkillID8").as_int();
+		st.skillid9 = xmlItem.attribute("SkillID9").as_int();
+		st.skillid10 = xmlItem.attribute("SkillID10").as_int();
+		st.skillid11 = xmlItem.attribute("SkillID11").as_int();
+		st.skillid12 = xmlItem.attribute("SkillID12").as_int();
+		st.skillid13 = xmlItem.attribute("SkillID13").as_int();
+		st.skillid14 = xmlItem.attribute("SkillID14").as_int();
+		st.skillid15 = xmlItem.attribute("SkillID15").as_int();
+		st.skillid16 = xmlItem.attribute("SkillID16").as_int();
+		st.skillid17 = xmlItem.attribute("SkillID17").as_int();
+		st.skillid18 = xmlItem.attribute("SkillID18").as_int();
+		st.skillid19 = xmlItem.attribute("SkillID19").as_int();
+		st.skillid20 = xmlItem.attribute("SkillID20").as_int();
+		st.skillid21 = xmlItem.attribute("SkillID21").as_int();
+		st.skillid22 = xmlItem.attribute("SkillID22").as_int();
+		st.skillid23 = xmlItem.attribute("SkillID23").as_int();
+		st.skillid24 = xmlItem.attribute("SkillID24").as_int();
+		st.skillid25 = xmlItem.attribute("SkillID25").as_int();
+		st.skillid26 = xmlItem.attribute("SkillID26").as_int();
+		st.skillid27 = xmlItem.attribute("SkillID27").as_int();
+		st.skillid28 = xmlItem.attribute("SkillID28").as_int();
+		st.skillid29 = xmlItem.attribute("SkillID29").as_int();
+		st.skillid30 = xmlItem.attribute("SkillID30").as_int();
+		st.skillid31 = xmlItem.attribute("SkillID31").as_int();
+		st.skillid32 = xmlItem.attribute("SkillID32").as_int();
+		st.skillid33 = xmlItem.attribute("SkillID33").as_int();
 	}
 }
 

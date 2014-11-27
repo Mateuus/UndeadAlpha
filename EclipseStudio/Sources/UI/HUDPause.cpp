@@ -535,7 +535,7 @@ void HUDPause::Activate()
 
 	// add player info
 	{
-		Scaleform::GFx::Value var[22];
+		Scaleform::GFx::Value var[23];
 
 		obj_Player* plr = gClientLogic().localPlayer_;
 		r3d_assert(plr);
@@ -568,8 +568,9 @@ void HUDPause::Activate()
 		var[19].SetString("");	// alignment
 		var[20].SetString("");	// last Map
 		var[21].SetBoolean(false); // globalInventory. For now false. Separate UI for it
+		var[22].SetNumber(slot.Stats.XP);
 
-		gfxMovie.Invoke("_root.api.addClientSurvivor", var, 22);
+		gfxMovie.Invoke("_root.api.addClientSurvivor", var, 23);
 	}
 
 	{

@@ -60,6 +60,42 @@ public partial class api_GetProfile1 : WOApiWebPage
             xml.Append(xml_attr("ts04", reader["Stat04"]));
             xml.Append(xml_attr("ts05", reader["Stat05"]));
 
+            //Code - Skills
+            xml.Append(xml_attr("SkillID0", reader["SkillID0"]));
+            xml.Append(xml_attr("SkillID1", reader["SkillID1"]));
+            xml.Append(xml_attr("SkillID2", reader["SkillID2"]));
+            xml.Append(xml_attr("SkillID3", reader["SkillID3"]));
+            xml.Append(xml_attr("SkillID4", reader["SkillID4"]));
+            xml.Append(xml_attr("SkillID5", reader["SkillID5"]));
+            xml.Append(xml_attr("SkillID6", reader["SkillID6"]));
+            xml.Append(xml_attr("SkillID7", reader["SkillID7"]));
+            xml.Append(xml_attr("SkillID8", reader["SkillID8"]));
+            xml.Append(xml_attr("SkillID9", reader["SkillID9"]));
+            xml.Append(xml_attr("SkillID10", reader["SkillID10"]));
+            xml.Append(xml_attr("SkillID11", reader["SkillID11"]));
+            xml.Append(xml_attr("SkillID12", reader["SkillID12"]));
+            xml.Append(xml_attr("SkillID13", reader["SkillID13"]));
+            xml.Append(xml_attr("SkillID14", reader["SkillID14"]));
+            xml.Append(xml_attr("SkillID15", reader["SkillID15"]));
+            xml.Append(xml_attr("SkillID16", reader["SkillID16"]));
+            xml.Append(xml_attr("SkillID17", reader["SkillID17"]));
+            xml.Append(xml_attr("SkillID18", reader["SkillID18"]));
+            xml.Append(xml_attr("SkillID19", reader["SkillID19"]));
+            xml.Append(xml_attr("SkillID20", reader["SkillID20"]));
+            xml.Append(xml_attr("SkillID21", reader["SkillID21"]));
+            xml.Append(xml_attr("SkillID22", reader["SkillID22"]));
+            xml.Append(xml_attr("SkillID23", reader["SkillID23"]));
+            xml.Append(xml_attr("SkillID24", reader["SkillID24"]));
+            xml.Append(xml_attr("SkillID25", reader["SkillID25"]));
+            xml.Append(xml_attr("SkillID26", reader["SkillID26"]));
+            xml.Append(xml_attr("SkillID27", reader["SkillID27"]));
+            xml.Append(xml_attr("SkillID28", reader["SkillID28"]));
+            xml.Append(xml_attr("SkillID29", reader["SkillID29"]));
+            xml.Append(xml_attr("SkillID30", reader["SkillID30"]));
+            xml.Append(xml_attr("SkillID31", reader["SkillID31"]));
+            xml.Append(xml_attr("SkillID32", reader["SkillID32"]));
+            xml.Append(xml_attr("SkillID33", reader["SkillID33"]));
+
             xml.Append("/>");
         }
         xml.Append("</chars>\n");

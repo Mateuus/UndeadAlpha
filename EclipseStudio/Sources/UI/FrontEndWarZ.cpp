@@ -1289,7 +1289,7 @@ void FrontendWarZ::addClientSurvivor(const wiCharDataFull& slot, int slotIndex)
 	var[19].SetString(getReputationString(slot.Stats.Reputation));	// alignment
 	var[20].SetString("COLORADO");	// last Map
 	var[21].SetBoolean(slot.GameFlags & wiCharDataFull::GAMEFLAG_NearPostBox);
-	var[22].SetNumber(0); //SkillXPPool
+	var[22].SetNumber(slot.Stats.XP);
 
 	gfxMovie.Invoke("_root.api.addClientSurvivor", var, 23);
 
@@ -1455,7 +1455,7 @@ void FrontendWarZ::eventLearnSkill(r3dScaleformMovie* pMovie, const Scaleform::G
 	CharID = slot.LoadoutID;
 
 	Scaleform::GFx::Value var[2];
-	var[0].SetStringW(gLangMngr.getString("SkillSystem : Running API..."));
+	var[0].SetStringW(gLangMngr.getString("Skillsystemapi"));
 	var[1].SetBoolean(false);
 	gfxMovie.Invoke("_root.api.showInfoMsg", var, 2);
 	r3dOutToLog("SkillSystem : Running API...\n");
@@ -1495,7 +1495,7 @@ void FrontendWarZ::OnLearnSkillSuccess()
 	var2[7].SetNumber(slot2.Toxic);
 	var2[8].SetNumber(slot2.BackpackID);
 	var2[9].SetNumber(slot2.BackpackSize);
-	var2[10].SetNumber(slot2.Stats.SkillXPPool);
+	var2[10].SetNumber(slot2.Stats.XP);
 	gfxMovie.Invoke("_root.api.updateClientSurvivor", var2, 11);
 	gfxMovie.Invoke("_root.api.Main.SkillTree.refreshSkillTree", ""); //[Krit] Refresh Skill Tree When Learn Skill Success
 	gfxMovie.Invoke("_root.api.hideInfoMsg", "");
@@ -1988,6 +1988,189 @@ void FrontendWarZ::updateInventoryAndSkillItems()
 		getAdditionalDescForItem(gUserProfile.ProfileData.Inventory[i].itemID, gUserProfile.ProfileData.Inventory[i].Var1, gUserProfile.ProfileData.Inventory[i].Var2, tmpStr);
 		var[6].SetString(tmpStr);
 		gfxMovie.Invoke("_root.api.addInventoryItem", var, 7);
+	}
+	for(int i=0;i<=4; i++)
+	{
+		const wiCharDataFull& slot = gUserProfile.ProfileData.ArmorySlots[i];
+		char tmpGamertag[128];
+		if(slot.ClanID != 0)
+			sprintf(tmpGamertag, "[%s] %s", slot.ClanTag, slot.Gamertag);
+		else
+			r3dscpy(tmpGamertag, slot.Gamertag);
+
+
+		Scaleform::GFx::Value var2[2];
+		if(slot.Stats.skillid0 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(0);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid1 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(1);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid2 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(2);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid3 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(3);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid4 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(4);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid5 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(5);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid6 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(6);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid7 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(7);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid8 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(8);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid9 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(9);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid10 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(10);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid11 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(11);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid12 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(12);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid13 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(13);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid14 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(14);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid15 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(15);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid16 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(16);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid17 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(17);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid18 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(18);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid19 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(19);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid20 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(20);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid21 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(21);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid22 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(22);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid23 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(23);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid24 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(24);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid25 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(25);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid26 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(26);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid27 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(27);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid28 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(28);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid29 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(29);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid30 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(30);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid31 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(31);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid32 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(32);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+		if(slot.Stats.skillid33 == 1){
+			var2[0].SetString(tmpGamertag);
+			var2[1].SetInt(33);
+			gfxMovie.Invoke("_root.api.setSkillLearnedSurvivor", var2, 2);
+		}
+
 	}
 }
 
