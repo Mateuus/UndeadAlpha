@@ -1289,9 +1289,10 @@ void FrontendWarZ::addClientSurvivor(const wiCharDataFull& slot, int slotIndex)
 	var[19].SetString(getReputationString(slot.Stats.Reputation));	// alignment
 	var[20].SetString("COLORADO");	// last Map
 	var[21].SetBoolean(slot.GameFlags & wiCharDataFull::GAMEFLAG_NearPostBox);
-	var[22].SetNumber(slot.Stats.XP);
-
+	var[22].SetNumber(slot.Stats.SkillXPPool);
 	gfxMovie.Invoke("_root.api.addClientSurvivor", var, 23);
+
+	updateInventoryAndSkillItems(); //Update Inventory and Skills Data
 
 	addBackpackItems(slot, slotIndex);
 }
@@ -1495,7 +1496,7 @@ void FrontendWarZ::OnLearnSkillSuccess()
 	var2[7].SetNumber(slot2.Toxic);
 	var2[8].SetNumber(slot2.BackpackID);
 	var2[9].SetNumber(slot2.BackpackSize);
-	var2[10].SetNumber(slot2.Stats.XP);
+	var2[10].SetNumber(slot2.Stats.SkillXPPool);
 	gfxMovie.Invoke("_root.api.updateClientSurvivor", var2, 11);
 	gfxMovie.Invoke("_root.api.Main.SkillTree.refreshSkillTree", ""); //[Krit] Refresh Skill Tree When Learn Skill Success
 	gfxMovie.Invoke("_root.api.hideInfoMsg", "");
@@ -2819,7 +2820,7 @@ void FrontendWarZ::OnBackpackChangeSuccess()
 	gfxMovie.Invoke("_root.api.hideInfoMsg", "");
 
 	wiCharDataFull& slot = gUserProfile.ProfileData.ArmorySlots[gUserProfile.SelectedCharID];
-	Scaleform::GFx::Value var[10];
+	Scaleform::GFx::Value var[11];
 	var[0].SetString(slot.Gamertag);
 	var[1].SetNumber(slot.Health);
 	var[2].SetNumber(slot.Stats.XP);
@@ -2830,7 +2831,8 @@ void FrontendWarZ::OnBackpackChangeSuccess()
 	var[7].SetNumber(slot.Toxic);
 	var[8].SetNumber(slot.BackpackID);
 	var[9].SetNumber(slot.BackpackSize);
-	gfxMovie.Invoke("_root.api.updateClientSurvivor", var, 10);
+	var[10].SetNumber(slot.Stats.SkillXPPool);
+	gfxMovie.Invoke("_root.api.updateClientSurvivor", var, 11);
 
 	addBackpackItems(slot, gUserProfile.SelectedCharID);
 	updateInventoryAndSkillItems();

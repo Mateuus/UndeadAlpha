@@ -186,9 +186,9 @@ struct wiCharDataFull
 	uint32_t	BackpackID; // itemID of backpack to render
 
 	// vars that is used only on client/server
-	int		Alive;	// 0 - dead, 1 - alive, 2 - revived, 3 - new character
+	int		    Alive;	// 0 - dead, 1 - alive, 2 - revived, 3 - new character
 	__int64		DeathUtcTime;
-	int		SecToRevive;
+	int		    SecToRevive;
 	float		Health; // 0..100; 0-dead. 100 - healthy
 	float		Hunger; // 0..100; 0-not hungry, 100 - starving
 	float		Thirst; // 0..100; 0-not thirsty, 100 - super thirsty!
@@ -200,7 +200,7 @@ struct wiCharDataFull
 	};
 
 	// current game data
-	int		GameMapId;
+	int		    GameMapId;
 	DWORD		GameServerId;
 	r3dPoint3D	GamePos;
 	float		GameDir;

@@ -268,7 +268,8 @@ void CUserProfile::ParseLoadouts(pugi::xml_node& xmlItem)
 		st.KilledSurvivors = xmlItem.attribute("ts01").as_int();
 		st.KilledBandits   = xmlItem.attribute("ts02").as_int();
 
-		xmlItem = xmlItem.next_sibling();
+		// skill xp
+		st.SkillXPPool = xmlItem.attribute("XP").as_int();
 
 		// skills
 		st.skillid0 = xmlItem.attribute("SkillID0").as_int();
@@ -305,6 +306,9 @@ void CUserProfile::ParseLoadouts(pugi::xml_node& xmlItem)
 		st.skillid31 = xmlItem.attribute("SkillID31").as_int();
 		st.skillid32 = xmlItem.attribute("SkillID32").as_int();
 		st.skillid33 = xmlItem.attribute("SkillID33").as_int();
+
+		xmlItem = xmlItem.next_sibling();
+
 	}
 }
 
