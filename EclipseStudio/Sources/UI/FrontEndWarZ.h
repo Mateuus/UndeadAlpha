@@ -167,7 +167,7 @@ private:
 	int		GetGamePing(DWORD superId);
 
 	void initFrontend();
-	void initItems();
+	void initInventoryItems();
 	void updateInventoryAndSkillItems();
 	void addStore();
 

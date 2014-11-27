@@ -178,9 +178,9 @@ void UIItemInventory::addItems()
 		var[6].SetNumber(gear->m_Weight);
 		gfxMovie_->Invoke("_root.api.addItem", var, 7);
 	}
-{
+    {
 		Scaleform::GFx::Value var[9];
-	var[0].SetUInt(301365);
+	    var[0].SetUInt(301365);
 		var[1].SetNumber(28);
 		var[2].SetString("Metal Pipe");
 		var[3].SetString("Craft Component Item");
@@ -189,9 +189,9 @@ void UIItemInventory::addItems()
 		var[6].SetNumber(0);						// weight
 		gfxMovie_->Invoke("_root.api.addItem", var, 7);
 	}
-{
+    {
 		Scaleform::GFx::Value var[9];
-	var[0].SetUInt(301321);
+	    var[0].SetUInt(301321);
 		var[1].SetNumber(50);
 		var[2].SetString("Gas");
 		var[3].SetString("");
@@ -200,9 +200,9 @@ void UIItemInventory::addItems()
 		var[6].SetNumber(0);						// weight
 		gfxMovie_->Invoke("_root.api.addItem", var, 7);
 	}
-		{
+	{
 		Scaleform::GFx::Value var[9];
-	var[0].SetUInt(301370);
+	    var[0].SetUInt(301370);
 		var[1].SetNumber(28);
 		var[2].SetString("Rope");
 		var[3].SetString("Craft Component Item");
@@ -211,9 +211,9 @@ void UIItemInventory::addItems()
 		var[6].SetNumber(0);						// weight
 		gfxMovie_->Invoke("_root.api.addItem", var, 7);
 	}
-				{
+	{
 		Scaleform::GFx::Value var[9];
-	var[0].SetUInt(301319);
+	    var[0].SetUInt(301319);
 		var[1].SetNumber(28);
 		var[2].SetString("Duck Tape");
 		var[3].SetString("Craft Component Item");
@@ -222,9 +222,9 @@ void UIItemInventory::addItems()
 		var[6].SetNumber(0);						// weight
 		gfxMovie_->Invoke("_root.api.addItem", var, 7);
 	}
-				{
+	{
 		Scaleform::GFx::Value var[9];
-	var[0].SetUInt(301335);
+	    var[0].SetUInt(301335);
 		var[1].SetNumber(28);
 		var[2].SetString("Scissors");
 		var[3].SetString("Craft Component Item");
@@ -233,6 +233,7 @@ void UIItemInventory::addItems()
 		var[6].SetNumber(0);						// weight
 		gfxMovie_->Invoke("_root.api.addItem", var, 7);
 	}
+
 	const int itemSize = allItem.size ();
 	for(int i = 0; i < itemSize; ++i)
 	{

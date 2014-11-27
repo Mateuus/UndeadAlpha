@@ -1334,7 +1334,7 @@ void FrontendWarZ::InitButtons()
 
 void FrontendWarZ::initFrontend()
 {
-	initItems();
+	initInventoryItems();
 	market_.initialize(&gfxMovie);
 
 	// send survivor info
@@ -1892,77 +1892,11 @@ void FrontendWarZ::OnReviveCharSuccess()
 	return;
 }
 
-void FrontendWarZ::initItems()
+void FrontendWarZ::initInventoryItems()
 {
-	// add categories
-	{
-		Scaleform::GFx::Value var[8];
-		var[2].SetNumber(0); 
-		var[3].SetNumber(0);
-		var[4].SetNumber(0);
-		var[5].SetNumber(0);
-		var[6].SetNumber(0);
-		var[7].SetBoolean(true); // visible in store
-
-// store & inventory tabs
-		var[0].SetNumber(0);
-		var[1].SetString("weapon");
-		var[2].SetBoolean(false);
-		var[3].SetBoolean(true);
-		gfxMovie.Invoke("_root.api.addTabType", var, 4);
-
-		var[0].SetNumber(1);
-		var[1].SetString("ammo");
-		var[2].SetBoolean(true);
-		var[3].SetBoolean(true);
-		gfxMovie.Invoke("_root.api.addTabType", var, 4);
-
-		var[0].SetNumber(2);
-		var[1].SetString("explosives");
-		var[2].SetBoolean(true);
-		var[3].SetBoolean(true);
-		gfxMovie.Invoke("_root.api.addTabType", var, 4);
-
-		var[0].SetNumber(3);
-		var[1].SetString("gear");
-		var[2].SetBoolean(true);
-		var[3].SetBoolean(true);
-		gfxMovie.Invoke("_root.api.addTabType", var, 4);
-
-		var[0].SetNumber(4);
-		var[1].SetString("food");
-		var[2].SetBoolean(true);
-		var[3].SetBoolean(true);
-		gfxMovie.Invoke("_root.api.addTabType", var, 4);
-
-		var[0].SetNumber(5);
-		var[1].SetString("survival");
-		var[2].SetBoolean(true);
-		var[3].SetBoolean(true);
-		gfxMovie.Invoke("_root.api.addTabType", var, 4);
-
-		var[0].SetNumber(6);
-		var[1].SetString("equipment");
-		var[2].SetBoolean(true);
-		var[3].SetBoolean(true);
-		gfxMovie.Invoke("_root.api.addTabType", var, 4);
-
-		var[0].SetNumber(7);
-		var[1].SetString("account");
-		var[2].SetBoolean(true);
-		var[3].SetBoolean(false);
-		gfxMovie.Invoke("_root.api.addTabType", var, 4);
-	}
-
-	// add items
-	{
-		addItemsAndCategoryToUI(gfxMovie);
-
-	}
-
 	updateInventoryAndSkillItems ();
-	addStore();
 }
+
 
 void FrontendWarZ::updateInventoryAndSkillItems()
 {

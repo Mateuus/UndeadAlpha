@@ -371,9 +371,7 @@ bool HUDPause::Init()
 	gfxMovie.SetCurentRTViewport( Scaleform::GFx::Movie::SM_ExactFit );
 
 	// add items
-	{
-		addItemsAndCategoryToUI(gfxMovie);
-	}
+    itemInventory_.initialize(&gfxMovie);
 
 	{
 		char sFullPath[512];

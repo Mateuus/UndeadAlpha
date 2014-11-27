@@ -34,8 +34,6 @@ struct GraphicSettings
 	GraphicSettings();
 };
 
-void addItemsAndCategoryToUI(class r3dScaleformMovie& gfxMovie);
-
 void FillDefaultSettings( GraphicSettings& settings, r3dDevStrength strength );
 DWORD	SetDefaultSettings( r3dDevStrength strength );
 DWORD	SetCustomSettings( const GraphicSettings& settings );

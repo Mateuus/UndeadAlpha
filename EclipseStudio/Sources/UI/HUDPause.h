@@ -1,6 +1,7 @@
 #pragma once
 
 #include "APIScaleformGfx.h"
+#include "UIItemInventory.h"
 
 class HUDPause
 {
@@ -57,4 +58,6 @@ public:
 	void	SetNeedUpdateSettings();
 
 	int		m_waitingForKeyRemap;
+
+	UIItemInventory itemInventory_;
 };
