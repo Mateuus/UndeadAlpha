@@ -96,16 +96,20 @@ void CMasterServerConfig::LoadPermGamesConfig()
     char map[512] = "";
     char data[512] = "";
     char name[512];
+	char MapSettings[512] ="";
+
     r3dscpy(map,  r3dReadCFG_S(configFile, group, "map", ""));
     r3dscpy(data, r3dReadCFG_S(configFile, group, "data", ""));
     r3dscpy(name, r3dReadCFG_S(configFile, group, "name", ""));
+	r3dscpy(MapSettings, r3dReadCFG_S(configFile, group, "MapSettings", ""));
+
     if(name[0] == 0)
       sprintf(name, "PermGame%d", i+1);
 
     if(*map == 0)
       continue;
     
-    ParsePermamentGame(i, name, map, data);
+    ParsePermamentGame(i, name, map, data, MapSettings);
   }
 
   return;  
@@ -140,7 +144,7 @@ static EGBGameRegion StringToGBRegion(const char* str)
   return GBNET_REGION_Unknown;
 }
 
-void CMasterServerConfig::ParsePermamentGame(int gameServerId, const char* name, const char* map, const char* data)
+void CMasterServerConfig::ParsePermamentGame(int gameServerId, const char* name, const char* map, const char* data, const char* MapSettings)
 {
   char mapid[128];
   char maptype[128];
@@ -161,7 +165,9 @@ void CMasterServerConfig::ParsePermamentGame(int gameServerId, const char* name,
   GBGameInfo ginfo;
   ginfo.mapId        = StringToGBMapID(mapid);
   ginfo.maxPlayers   = maxPlayers;
+
   r3dscpy(ginfo.name, name);
+  r3dscpy(ginfo.MapSettings,MapSettings);
 
   r3dOutToLog("permgame: ID:%d, %s, %s\n", 
     gameServerId, name, mapid);
@@ -179,6 +185,6 @@ void CMasterServerConfig::AddPermanentGame(int gameServerId, const GBGameInfo& g
   pg.ginfo = ginfo;
   pg.ginfo.gameServerId = gameServerId;
   pg.ginfo.region       = region;
-  
+
   return;
 }

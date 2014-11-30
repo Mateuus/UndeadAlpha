@@ -30,7 +30,7 @@ class CMasterServerConfig
 	void		Temp_Load_WarZGames();
 
 	void		LoadPermGamesConfig();
-	void		 ParsePermamentGame(int gameServerId, const char* name, const char* map, const char* data);
+	void		 ParsePermamentGame(int gameServerId, const char* name, const char* map, const char* data, const char* MapSettings);
 	void		 AddPermanentGame(int gameServerId, const GBGameInfo& ginfo, EGBGameRegion region);
 	
   public:

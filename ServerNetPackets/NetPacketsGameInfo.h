@@ -34,6 +34,8 @@ struct GBGameInfo
 	};
 
 	char	name[16];
+    char	MapSettings[512];
+
 	BYTE	mapId;
 	BYTE	maxPlayers;
 	BYTE	flags;		// some game flags

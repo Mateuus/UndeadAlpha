@@ -1322,13 +1322,13 @@ void FrontendWarZ::addBackpackItems(const wiCharDataFull& slot, int slotIndex)
 void FrontendWarZ::InitButtons()
 {
 	Scaleform::GFx::Value vars[7];
-	vars[0].SetBoolean(false); // trial
+	vars[0].SetBoolean(true); // trial
 	vars[1].SetBoolean(true);  // Oficial
-	vars[2].SetBoolean(false); // private
+	vars[2].SetBoolean(true); // private
 	vars[3].SetBoolean(true);
-	vars[4].SetBoolean(false);
-	vars[5].SetBoolean(false);
-	vars[6].SetBoolean(false);
+	vars[4].SetBoolean(true);
+	vars[5].SetBoolean(true);
+	vars[6].SetBoolean(true);
 	gfxMovie.Invoke("_root.api.Main.BrowseGamesChannelsAnim.initButtons", vars, 7);
 }
 
@@ -3508,6 +3508,9 @@ void FrontendWarZ::processNewGameList()
 
 	if (CurrentBrowse == 2) // Oficial Servers
       {
+		   if (/*strcmp(ginfo.PasswordGame,"") == 0 && */
+				strcmp(ginfo.MapSettings,"0") == 0)
+            {
 
 		var[0].SetNumber(ginfo.gameServerId);
 		char namegame[512];
@@ -3561,10 +3564,14 @@ void FrontendWarZ::processNewGameList()
 					if(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-       }
+         }
+      }
 
 	  else if (CurrentBrowse == 3) // Private Servers
 	   {
+		    if (/*strcmp(ginfo.PasswordGame,"") == 0 && */
+				strcmp(ginfo.MapSettings,"6") == 0)
+            {
 
 		var[0].SetNumber(ginfo.gameServerId);
 		char namegame[512];
@@ -3618,10 +3625,14 @@ void FrontendWarZ::processNewGameList()
 					if(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-       }
+          }
+	   }
 
 	   else if (CurrentBrowse == 4) // Premium Servers
 	   {
+		   if (/*strcmp(ginfo.PasswordGame,"") == 0 && */
+				strcmp(ginfo.MapSettings,"2") == 0)
+            {
 
 		var[0].SetNumber(ginfo.gameServerId);
 		char namegame[512];
@@ -3675,10 +3686,16 @@ void FrontendWarZ::processNewGameList()
 					if(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-       }
+          }
+	   }
 
 	   else if (CurrentBrowse == 5) // StrongHolds Servers
 	    {
+
+			if (/*strcmp(ginfo.PasswordGame,"") == 0 && */
+				strcmp(ginfo.MapSettings,"4") == 0)
+            {
+
 		var[0].SetNumber(ginfo.gameServerId);
 		char namegame[512];
 		sprintf(namegame,"%s - %.3i",ginfo.name,StrongHoldsServersNumber);
@@ -3731,10 +3748,15 @@ void FrontendWarZ::processNewGameList()
 					if(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-       }
+           }
+		}
 
 	   else if (CurrentBrowse == 6) // Public Servers
-	         {
+	     {
+           	if (/*strcmp(ginfo.PasswordGame,"") == 0 && */
+				strcmp(ginfo.MapSettings,"1") == 0)
+            {
+
 	    var[0].SetNumber(ginfo.gameServerId);
 		char namegame[512];
 		sprintf(namegame,"%s - %.3i",ginfo.name,PublicServersNumber);
@@ -3787,11 +3809,17 @@ void FrontendWarZ::processNewGameList()
 					if(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-       }
+           }
+		}
 
 
 		else if (CurrentBrowse == 7) // Veteran Servers
-              {
+        {
+		   if (/*strcmp(ginfo.PasswordGame,"") == 0 && */
+				strcmp(ginfo.MapSettings,"5") == 0)
+            {
+
+
 		var[0].SetNumber(ginfo.gameServerId);
 		char namegame[512];
 		sprintf(namegame,"%s - %.3i",ginfo.name,VeteranServersNumber);
@@ -3902,7 +3930,7 @@ void FrontendWarZ::processNewGameList()
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 			    }
             }
-	   
+	    }
 	}
 }
 

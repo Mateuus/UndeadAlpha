@@ -599,8 +599,30 @@ CServerS* CMasterGameServer::GetLeastUsedServer(EGBGameRegion region)
     CServerS* super = it->second;
     
     // filter our supervisors if region is specified
-    if(region != GBNET_REGION_Unknown && super->region_ != region)
+	bool haveSupers = false;
+    switch(region)
+	{
+	case GBNET_REGION_US_West:
+		haveSupers = true;
+		break;
+	case GBNET_REGION_US_East:
+		haveSupers = true;
+		break;
+	case GBNET_REGION_Europe:
+		haveSupers = true;
+		break;
+	case GBNET_REGION_Russia:
+		haveSupers = true;
+		break;
+	default:
+		haveSupers = false;
+	}
+	// check if we have supervisors with correct region, if not - skip it
+
+    // silently continue, no need to spam log about that
+    if(!haveSupers) {
       continue;
+    }
       
     if(super->GetExpectedGames() >= super->maxGames_)
       continue;
