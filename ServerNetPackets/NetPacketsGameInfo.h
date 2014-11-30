@@ -33,7 +33,8 @@ struct GBGameInfo
 	  MAPID_MAX_ID,
 	};
 
-	char	name[16];
+	char	name[512];
+	char    PasswordGame[512];
     char	MapSettings[512];
 
 	BYTE	mapId;

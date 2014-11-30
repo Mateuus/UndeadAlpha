@@ -693,6 +693,7 @@ bool FrontendWarZ::Initialize()
 	gfxMovie.RegisterEventHandler("eventBrowseGamesJoin", MAKE_CALLBACK(eventBrowseGamesJoin));	
 	gfxMovie.RegisterEventHandler("eventBrowseGamesOnAddToFavorites", MAKE_CALLBACK(eventBrowseGamesOnAddToFavorites));	
 	gfxMovie.RegisterEventHandler("eventBrowseGamesRequestList", MAKE_CALLBACK(eventBrowseGamesRequestList));	
+	gfxMovie.RegisterEventHandler("eventTrialUpgradeAccount", MAKE_CALLBACK(eventTrialUpgradeAccount));	// PasswordCallBack
 
 	gfxMovie.RegisterEventHandler("eventRequestMyClanInfo", MAKE_CALLBACK(eventRequestMyClanInfo));	
 	gfxMovie.RegisterEventHandler("eventRequestClanList", MAKE_CALLBACK(eventRequestClanList));	
@@ -3378,6 +3379,14 @@ void FrontendWarZ::eventBrowseGamesJoin(r3dScaleformMovie* pMovie, const Scalefo
 	r3d_assert(args);
 	r3d_assert(argCount == 1);
 
+	if (CurrentBrowse == 3)
+	{
+		m_joinGameServerId = args[0].GetInt();
+		r3d_assert(m_joinGameServerId > 0);
+		gfxMovie.Invoke("_root.api.showTrialUpgradeWindow", "");
+		return;
+	}
+
 	if(gUserProfile.ProfileData.NumSlots == 0)
 		return;
 		
@@ -3440,6 +3449,23 @@ void FrontendWarZ::eventBrowseGamesRequestList(r3dScaleformMovie* pMovie, const 
 		processNewGameList();	
 		gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.showGameList", "");
 	}
+}
+
+void FrontendWarZ::eventTrialUpgradeAccount(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount)
+{
+	r3d_assert(args);
+	r3d_assert(argCount == 1);
+	r3dscpy(this->m_joinGamePwd,args[0].GetString());
+
+	Scaleform::GFx::Value var[3];
+	var[0].SetStringW(gLangMngr.getString("WaitConnectingToServer"));
+	var[1].SetBoolean(false);
+	var[2].SetString("");
+
+	gfxMovie.Invoke("_root.api.showInfoMsg", var, 3);
+
+	async_.StartAsyncOperation(this, &FrontendWarZ::as_JoinGameThread);
+
 }
 
 unsigned int WINAPI FrontendWarZ::as_BrowseGamesThread(void* in_data)
@@ -3505,432 +3531,447 @@ void FrontendWarZ::processNewGameList()
 		//addGameToList(id:Number, name:String, mode:String, map:String, tracers:Boolean, nametags:Boolean, crosshair:Boolean, players:String, ping:int, isFavorite:Boolean, isPassword:Boolean)
 		Scaleform::GFx::Value var[15];
 
-
-	if (CurrentBrowse == 2) // Oficial Servers
-      {
-		   if (/*strcmp(ginfo.PasswordGame,"") == 0 && */
+		if (CurrentBrowse == 2) // Oficial Servers
+        {
+			//r3dOutToLog("######## ginfo.OficialServers %s\n",ginfo.OficialServers);
+            if (strcmp(ginfo.PasswordGame,"") == 0 && 
 				strcmp(ginfo.MapSettings,"0") == 0)
             {
-
-		var[0].SetNumber(ginfo.gameServerId);
-		char namegame[512];
-		sprintf(namegame,"%s - %.3i",ginfo.name,OficialServersNumber);
-		OficialServersNumber++;
-        var[1].SetString(namegame);;
-		var[2].SetString("GAMEWORLD");
-		switch (ginfo.mapId)
-		{
-		  case GBGameInfo::MAPID_WZ_Colorado:
-              var[3].SetString("COLORADO");
-		      break;
-		  case GBGameInfo::MAPID_ServerTest:
-		      var[3].SetString("DEVMAP");
-		      break;
-		  default:
-			  var[3].SetString("MAPTEST");
-			  break;
-		}
-		var[4].SetBoolean(true);
-		var[5].SetBoolean(true);
-		var[6].SetBoolean(false); //Crosshair
-		char players[16];
-		sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
-		var[7].SetString(players);
-		var[8].SetInt(ping);
-		var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
-		var[10].SetString(false);  // isPassword
-        var[11].SetBoolean(true);  // TimeLimit
-        var[12].SetBoolean(false); // TiralAllowJoin
-        var[13].SetBoolean(false); // donate
-		var[14].SetBoolean(false); // disable weapon
-		if ( m_browseGamesMode == 0) // Normal Browser
+                var[0].SetNumber(ginfo.gameServerId);
+				char namegame[512];
+				sprintf(namegame,"%s - %.3i",ginfo.name,OficialServersNumber);
+				OficialServersNumber++;
+                var[1].SetString(namegame);
+                var[2].SetString("GAMEWORLD");
+                switch (ginfo.mapId)
+		        {
+		        case GBGameInfo::MAPID_WZ_Colorado:
+                    var[3].SetString("COLORADO");
+		            break;
+		        case GBGameInfo::MAPID_ServerTest:
+		            var[3].SetString("DEVMAP");
+		            break;
+		        default:
+			        var[3].SetString("MAPTEST");
+			        break;
+		        }
+                var[4].SetBoolean(true);
+                var[5].SetBoolean(true);
+                var[6].SetBoolean(true);
+                char players[16];
+                sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
+                var[7].SetString(players);
+                var[8].SetInt(ping);
+                var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
+                var[10].SetString(ginfo.PasswordGame); // isPassword
+                var[11].SetBoolean(true); // TimeLimit
+                var[12].SetBoolean(false); // TiralAllowJoin
+                var[13].SetBoolean(false); // donate
+				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon*/
+				var[14].SetBoolean(false); // disable weapon
+				if ( m_browseGamesMode == 0) // Normal Browser
 				{
 					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 					if(gUserSettings.BrowseGames_Filter.region_eu && ginfo.region == GBNET_REGION_Europe)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
-/*					if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
+				/*	if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 					if (gUserSettings.BrowseGames_Filter.region_ru && ginfo.region == GBNET_REGION_Russia)
-						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);*/
+						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
+			    */
 				}
-		if ( m_browseGamesMode == 1) // Recent
+				if ( m_browseGamesMode == 1) // Recent
 				{
 					if(gUserSettings.isInRecentGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-		if ( m_browseGamesMode == 2) // Favorite
+				if ( m_browseGamesMode == 2) // Favorite
 				{
 					if(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-         }
-      }
 
-	  else if (CurrentBrowse == 3) // Private Servers
-	   {
-		    if (/*strcmp(ginfo.PasswordGame,"") == 0 && */
+            }
+        }
+		else if (CurrentBrowse == 3) // Private Servers
+        {
+            if (strcmp(ginfo.PasswordGame,"") != 0 && 
 				strcmp(ginfo.MapSettings,"6") == 0)
             {
-
-		var[0].SetNumber(ginfo.gameServerId);
-		char namegame[512];
-		sprintf(namegame,"%s - %.3i",ginfo.name,PrivateServersNumber);
-		PrivateServersNumber++;
-        var[1].SetString(namegame);
-		var[2].SetString("GAMEWORLD");
-		switch (ginfo.mapId)
-		{
-		  case GBGameInfo::MAPID_WZ_Colorado:
-              var[3].SetString("COLORADO");
-		      break;
-		 case GBGameInfo::MAPID_ServerTest:
-		      var[3].SetString("DEVMAP");
-		      break;
-		  default:
-			  var[3].SetString("MAPTEST");
-			  break;
-		}
-		var[4].SetBoolean(true);
-		var[5].SetBoolean(true);
-		var[6].SetBoolean(false); //Crosshair
-		char players[16];
-		sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
-		var[7].SetString(players);
-		var[8].SetInt(ping);
-		var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
-		var[10].SetString(false);  // isPassword
-        var[11].SetBoolean(true);  // TimeLimit
-        var[12].SetBoolean(false); // TiralAllowJoin
-        var[13].SetBoolean(false); // donate
-		var[14].SetBoolean(false); // disable weapon
-		if ( m_browseGamesMode == 0) // Normal Browser
+                var[0].SetNumber(ginfo.gameServerId);
+				char namegame[512];
+				sprintf(namegame,"%s - %.3i",ginfo.name,OficialServersNumber);
+				OficialServersNumber++;
+                var[1].SetString(namegame);
+                var[2].SetString("GAMEWORLD");
+                switch (ginfo.mapId)
+		        {
+		        case GBGameInfo::MAPID_WZ_Colorado:
+                    var[3].SetString("COLORADO");
+		            break;
+		        case GBGameInfo::MAPID_ServerTest:
+		            var[3].SetString("DEVMAP");
+		            break;
+		        default:
+			        var[3].SetString("MAPTEST");
+			        break;
+		        }
+                var[4].SetBoolean(true);
+                var[5].SetBoolean(true);
+                var[6].SetBoolean(true);
+                char players[16];
+                sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
+                var[7].SetString(players);
+                var[8].SetInt(ping);
+                var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
+                var[10].SetString(ginfo.PasswordGame); // isPassword
+                var[11].SetBoolean(true); // TimeLimit
+                var[12].SetBoolean(false); // TiralAllowJoin
+                var[13].SetBoolean(false); // donate
+				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon*/
+				var[14].SetBoolean(false); // disable weapon
+				if ( m_browseGamesMode == 0) // Normal Browser
 				{
 					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 					if(gUserSettings.BrowseGames_Filter.region_eu && ginfo.region == GBNET_REGION_Europe)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
-/*					if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
+				/*	if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 					if (gUserSettings.BrowseGames_Filter.region_ru && ginfo.region == GBNET_REGION_Russia)
-						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);*/
+						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
+			    */
 				}
-		if ( m_browseGamesMode == 1) // Recent
+				if ( m_browseGamesMode == 1) // Recent
 				{
 					if(gUserSettings.isInRecentGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-		if ( m_browseGamesMode == 2) // Favorite
+				if ( m_browseGamesMode == 2) // Favorite
 				{
 					if(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-          }
-	   }
+            }
+        }
+		else if (CurrentBrowse == 4) // Premium Servers
+        {
 
-	   else if (CurrentBrowse == 4) // Premium Servers
-	   {
-		   if (/*strcmp(ginfo.PasswordGame,"") == 0 && */
+            if (strcmp(ginfo.PasswordGame,"") == 0 && 
 				strcmp(ginfo.MapSettings,"2") == 0)
             {
-
-		var[0].SetNumber(ginfo.gameServerId);
-		char namegame[512];
-		sprintf(namegame,"%s - %.3i",ginfo.name,PremiumServersNumber);
-		PremiumServersNumber++;
-        var[1].SetString(namegame);
-		var[2].SetString("GAMEWORLD");
-		switch (ginfo.mapId)
-		{
-		  case GBGameInfo::MAPID_WZ_Colorado:
-              var[3].SetString("COLORADO");
-		      break;
-		  case GBGameInfo::MAPID_ServerTest:
-		      var[3].SetString("DEVMAP");
-		      break;
-		  default:
-			  var[3].SetString("MAPTEST");
-			  break;
-		}
-		var[4].SetBoolean(true);
-		var[5].SetBoolean(true);
-		var[6].SetBoolean(false); //Crosshair
-		char players[16];
-		sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
-		var[7].SetString(players);
-		var[8].SetInt(ping);
-		var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
-		var[10].SetString(false);  // isPassword
-        var[11].SetBoolean(true);  // TimeLimit
-        var[12].SetBoolean(false); // TiralAllowJoin
-        var[13].SetBoolean(false); // donate
-		var[14].SetBoolean(false); // disable weapon
-		if ( m_browseGamesMode == 0) // Normal Browser
+                var[0].SetNumber(ginfo.gameServerId);
+				char namegame[512];
+				sprintf(namegame,"%s - %.3i",ginfo.name,OficialServersNumber);
+				OficialServersNumber++;
+                var[1].SetString(namegame);
+                var[2].SetString("GAMEWORLD");
+                switch (ginfo.mapId)
+		        {
+		        case GBGameInfo::MAPID_WZ_Colorado:
+                    var[3].SetString("COLORADO");
+		            break;
+		        case GBGameInfo::MAPID_ServerTest:
+		            var[3].SetString("DEVMAP");
+		            break;
+		        default:
+			        var[3].SetString("MAPTEST");
+			        break;
+		        }
+                var[4].SetBoolean(true);
+                var[5].SetBoolean(true);
+                var[6].SetBoolean(true);
+                char players[16];
+                sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
+                var[7].SetString(players);
+                var[8].SetInt(ping);
+                var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
+                var[10].SetString(ginfo.PasswordGame); // isPassword
+                var[11].SetBoolean(true); // TimeLimit
+                var[12].SetBoolean(false); // TiralAllowJoin
+                var[13].SetBoolean(false); // donate
+				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon*/
+				var[14].SetBoolean(false); // disable weapon
+				if ( m_browseGamesMode == 0) // Normal Browser
 				{
 					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 					if(gUserSettings.BrowseGames_Filter.region_eu && ginfo.region == GBNET_REGION_Europe)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
-/*					if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
+				/*	if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 					if (gUserSettings.BrowseGames_Filter.region_ru && ginfo.region == GBNET_REGION_Russia)
-						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);*/
+						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
+			    */
 				}
-		if ( m_browseGamesMode == 1) // Recent
+				if ( m_browseGamesMode == 1) // Recent
 				{
 					if(gUserSettings.isInRecentGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-		if ( m_browseGamesMode == 2) // Favorite
+				if ( m_browseGamesMode == 2) // Favorite
 				{
 					if(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-          }
-	   }
+            }
+        }
+		else if (CurrentBrowse == 5) // StrongHolds Servers
+        {
 
-	   else if (CurrentBrowse == 5) // StrongHolds Servers
-	    {
-
-			if (/*strcmp(ginfo.PasswordGame,"") == 0 && */
+            if (strcmp(ginfo.PasswordGame,"") == 0 && 
 				strcmp(ginfo.MapSettings,"4") == 0)
             {
-
-		var[0].SetNumber(ginfo.gameServerId);
-		char namegame[512];
-		sprintf(namegame,"%s - %.3i",ginfo.name,StrongHoldsServersNumber);
-		StrongHoldsServersNumber++;
-        var[1].SetString(namegame);
-		var[2].SetString("GAMEWORLD");
-		switch (ginfo.mapId)
-		{
-		  case GBGameInfo::MAPID_WZ_Colorado:
-              var[3].SetString("COLORADO");
-		      break;
-		  case GBGameInfo::MAPID_ServerTest:
-		      var[3].SetString("DEVMAP");
-		      break;
-		  default:
-			  var[3].SetString("MAPTEST");
-			  break;
-		}
-		var[4].SetBoolean(true);
-		var[5].SetBoolean(true);
-		var[6].SetBoolean(false); //Crosshair
-		char players[16];
-		sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
-		var[7].SetString(players);
-		var[8].SetInt(ping);
-		var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
-		var[10].SetString(false);  // isPassword
-        var[11].SetBoolean(true);  // TimeLimit
-        var[12].SetBoolean(false); // TiralAllowJoin
-        var[13].SetBoolean(false); // donate
-		var[14].SetBoolean(false); // disable weapon
-		if ( m_browseGamesMode == 0) // Normal Browser
+                var[0].SetNumber(ginfo.gameServerId);
+				char namegame[512];
+				sprintf(namegame,"%s - %.3i",ginfo.name,OficialServersNumber);
+				OficialServersNumber++;
+                var[1].SetString(namegame);
+                var[2].SetString("GAMEWORLD");
+                switch (ginfo.mapId)
+		        {
+		        case GBGameInfo::MAPID_WZ_Colorado:
+                    var[3].SetString("COLORADO");
+		            break;
+		        case GBGameInfo::MAPID_ServerTest:
+		            var[3].SetString("DEVMAP");
+		            break;
+		        default:
+			        var[3].SetString("MAPTEST");
+			        break;
+		        }
+                var[4].SetBoolean(true);
+                var[5].SetBoolean(true);
+                var[6].SetBoolean(true);
+                char players[16];
+                sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
+                var[7].SetString(players);
+                var[8].SetInt(ping);
+                var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
+                var[10].SetString(ginfo.PasswordGame); // isPassword
+                var[11].SetBoolean(true); // TimeLimit
+                var[12].SetBoolean(false); // TiralAllowJoin
+                var[13].SetBoolean(false); // donate
+				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon*/
+				var[14].SetBoolean(false); // disable weapon
+				if ( m_browseGamesMode == 0) // Normal Browser
 				{
 					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 					if(gUserSettings.BrowseGames_Filter.region_eu && ginfo.region == GBNET_REGION_Europe)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
-/*					if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
+				/*	if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 					if (gUserSettings.BrowseGames_Filter.region_ru && ginfo.region == GBNET_REGION_Russia)
-						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);*/
+						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
+			    */
 				}
-		if ( m_browseGamesMode == 1) // Recent
+				if ( m_browseGamesMode == 1) // Recent
 				{
 					if(gUserSettings.isInRecentGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-		if ( m_browseGamesMode == 2) // Favorite
+				if ( m_browseGamesMode == 2) // Favorite
 				{
 					if(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-           }
-		}
+            }
+        }
+		else if (CurrentBrowse == 6) // Public Servers
+        {
 
-	   else if (CurrentBrowse == 6) // Public Servers
-	     {
-           	if (/*strcmp(ginfo.PasswordGame,"") == 0 && */
+            if (strcmp(ginfo.PasswordGame,"") == 0 && 
 				strcmp(ginfo.MapSettings,"1") == 0)
             {
-
-	    var[0].SetNumber(ginfo.gameServerId);
-		char namegame[512];
-		sprintf(namegame,"%s - %.3i",ginfo.name,PublicServersNumber);
-		PublicServersNumber++;
-        var[1].SetString(namegame);
-		var[2].SetString("GAMEWORLD");
-		switch (ginfo.mapId)
-		{
-		  case GBGameInfo::MAPID_WZ_Colorado:
-              var[3].SetString("COLORADO");
-		      break;
-		  case GBGameInfo::MAPID_ServerTest:
-		      var[3].SetString("DEVMAP");
-		      break;
-		  default:
-			  var[3].SetString("MAPTEST");
-			  break;
-		}
-		var[4].SetBoolean(true);
-		var[5].SetBoolean(true);
-		var[6].SetBoolean(false); //Crosshair
-		char players[16];
-		sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
-		var[7].SetString(players);
-		var[8].SetInt(ping);
-		var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
-		var[10].SetString(false);  // isPassword
-        var[11].SetBoolean(true);  // TimeLimit
-        var[12].SetBoolean(false); // TiralAllowJoin
-        var[13].SetBoolean(false); // donate
-		var[14].SetBoolean(false); // disable weapon
-		if ( m_browseGamesMode == 0) // Normal Browser
+                var[0].SetNumber(ginfo.gameServerId);
+				char namegame[512];
+				sprintf(namegame,"%s - %.3i",ginfo.name,OficialServersNumber);
+				OficialServersNumber++;
+                var[1].SetString(namegame);
+                var[2].SetString("GAMEWORLD");
+                switch (ginfo.mapId)
+		        {
+		        case GBGameInfo::MAPID_WZ_Colorado:
+                    var[3].SetString("COLORADO");
+		            break;
+		        case GBGameInfo::MAPID_ServerTest:
+		            var[3].SetString("DEVMAP");
+		            break;
+		        default:
+			        var[3].SetString("MAPTEST");
+			        break;
+		        }
+                var[4].SetBoolean(true);
+                var[5].SetBoolean(true);
+                var[6].SetBoolean(true);
+                char players[16];
+                sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
+                var[7].SetString(players);
+                var[8].SetInt(ping);
+                var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
+                var[10].SetString(ginfo.PasswordGame); // isPassword
+                var[11].SetBoolean(true); // TimeLimit
+                var[12].SetBoolean(false); // TiralAllowJoin
+                var[13].SetBoolean(false); // donate
+				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon*/
+				var[14].SetBoolean(false); // disable weapon
+				if ( m_browseGamesMode == 0) // Normal Browser
 				{
 					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 					if(gUserSettings.BrowseGames_Filter.region_eu && ginfo.region == GBNET_REGION_Europe)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
-/*					if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
+				/*	if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 					if (gUserSettings.BrowseGames_Filter.region_ru && ginfo.region == GBNET_REGION_Russia)
-						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);*/
+						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
+			    */
 				}
-		if ( m_browseGamesMode == 1) // Recent
+				if ( m_browseGamesMode == 1) // Recent
 				{
 					if(gUserSettings.isInRecentGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-		if ( m_browseGamesMode == 2) // Favorite
+				if ( m_browseGamesMode == 2) // Favorite
 				{
 					if(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-           }
-		}
-
-
+            }
+        }
 		else if (CurrentBrowse == 7) // Veteran Servers
         {
-		   if (/*strcmp(ginfo.PasswordGame,"") == 0 && */
+
+            if (strcmp(ginfo.PasswordGame,"") == 0 && 
 				strcmp(ginfo.MapSettings,"5") == 0)
             {
-
-
-		var[0].SetNumber(ginfo.gameServerId);
-		char namegame[512];
-		sprintf(namegame,"%s - %.3i",ginfo.name,VeteranServersNumber);
-		VeteranServersNumber++;
-        var[1].SetString(namegame);
-		var[2].SetString("GAMEWORLD");
-		switch (ginfo.mapId)
-		{
-		  case GBGameInfo::MAPID_WZ_Colorado:
-              var[3].SetString("COLORADO");
-		      break;
-		  case GBGameInfo::MAPID_ServerTest:
-		      var[3].SetString("DEVMAP");
-		      break;
-		  default:
-			  var[3].SetString("MAPTEST");
-			  break;
-		}
-		var[4].SetBoolean(true);
-		var[5].SetBoolean(true);
-		var[6].SetBoolean(false); //Crosshair
-		char players[16];
-		sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
-		var[7].SetString(players);
-		var[8].SetInt(ping);
-		var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
-		var[10].SetString(false);  // isPassword
-        var[11].SetBoolean(true);  // TimeLimit
-        var[12].SetBoolean(false); // TiralAllowJoin
-        var[13].SetBoolean(false); // donate
-		var[14].SetBoolean(false); // disable weapon
-		if ( m_browseGamesMode == 0) // Normal Browser
+                var[0].SetNumber(ginfo.gameServerId);
+				char namegame[512];
+				sprintf(namegame,"%s - %.3i",ginfo.name,OficialServersNumber);
+				OficialServersNumber++;
+                var[1].SetString(namegame);
+                var[2].SetString("GAMEWORLD");
+                switch (ginfo.mapId)
+		        {
+		        case GBGameInfo::MAPID_WZ_Colorado:
+                    var[3].SetString("COLORADO");
+		            break;
+		        case GBGameInfo::MAPID_ServerTest:
+		            var[3].SetString("DEVMAP");
+		            break;
+		        default:
+			        var[3].SetString("MAPTEST");
+			        break;
+		        }
+                var[4].SetBoolean(true);
+                var[5].SetBoolean(true);
+                var[6].SetBoolean(true);
+                char players[16];
+                sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
+                var[7].SetString(players);
+                var[8].SetInt(ping);
+                var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
+                var[10].SetString(ginfo.PasswordGame); // isPassword
+                var[11].SetBoolean(true); // TimeLimit
+                var[12].SetBoolean(false); // TiralAllowJoin
+                var[13].SetBoolean(false); // donate
+				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon*/
+				var[14].SetBoolean(false); // disable weapon
+				if ( m_browseGamesMode == 0) // Normal Browser
 				{
 					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 					if(gUserSettings.BrowseGames_Filter.region_eu && ginfo.region == GBNET_REGION_Europe)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
-/*					if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
+				/*	if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
 						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 					if (gUserSettings.BrowseGames_Filter.region_ru && ginfo.region == GBNET_REGION_Russia)
-						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);*/
+						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
+			    */
 				}
-		if ( m_browseGamesMode == 1) // Recent
+				if ( m_browseGamesMode == 1) // Recent
 				{
 					if(gUserSettings.isInRecentGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-		if ( m_browseGamesMode == 2) // Favorite
+				if ( m_browseGamesMode == 2) // Favorite
 				{
 					if(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId))
 					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
 				}
-       }
-
-
-		else if (CurrentBrowse == 1) // Trial Servers
-              {
-		var[0].SetNumber(ginfo.gameServerId);
-		char namegame[512];
-		sprintf(namegame,"%s - %.3i",ginfo.name,TrialServersNumber);
-		TrialServersNumber++;
-        var[1].SetString(namegame);
-		var[2].SetString("GAMEWORLD");
-		switch (ginfo.mapId)
-		{
-		  case GBGameInfo::MAPID_WZ_Colorado:
-              var[3].SetString("COLORADO");
-		      break;
-		  case GBGameInfo::MAPID_ServerTest:
-		      var[3].SetString("DEVMAP");
-		      break;
-		  default:
-			  var[3].SetString("MAPTEST");
-			  break;
-		}
-				var[4].SetBoolean(true);
-				var[5].SetBoolean(true);
-				var[6].SetBoolean(false); //Crosshair
-				char players[16];
-				sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
-				var[7].SetString(players);
-				var[8].SetInt(ping);
-				var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
-				var[10].SetString(false);  // isPassword
-       		    var[11].SetBoolean(true);  // TimeLimit
-      		    var[12].SetBoolean(false); // TiralAllowJoin
-       		     var[13].SetBoolean(false); // donate
-			 	var[14].SetBoolean(false); // disable weapon
-		        if ( m_browseGamesMode == 0) // Normal Browser
-				{
-					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
-						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
-					if(gUserSettings.BrowseGames_Filter.region_eu && ginfo.region == GBNET_REGION_Europe)
-						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
-/*					if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
-						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
-					if (gUserSettings.BrowseGames_Filter.region_ru && ginfo.region == GBNET_REGION_Russia)
-						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);*/
-				}
-		        if ( m_browseGamesMode == 1) // Recent
-				{
-					if(gUserSettings.isInRecentGamesList(ginfo.gameServerId))
-					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
-				}
-		        if ( m_browseGamesMode == 2) // Favorite
-				{
-					if(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId))
-					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
-			    }
             }
-	    }
+        }
+		else if (CurrentBrowse == 1) // Trial Servers
+        {
+			
+            if (strcmp(ginfo.PasswordGame,"") == 0 && 
+				strcmp(ginfo.MapSettings,"3") == 0)
+            {
+                var[0].SetNumber(ginfo.gameServerId);
+				char namegame[512];
+				sprintf(namegame,"%s - %.3i",ginfo.name,OficialServersNumber);
+				OficialServersNumber++;
+                var[1].SetString(namegame);
+                var[2].SetString("GAMEWORLD");
+                switch (ginfo.mapId)
+		        {
+		        case GBGameInfo::MAPID_WZ_Colorado:
+                    var[3].SetString("COLORADO");
+		            break;
+		        case GBGameInfo::MAPID_ServerTest:
+		            var[3].SetString("DEVMAP");
+		            break;
+		        default:
+			        var[3].SetString("MAPTEST");
+			        break;
+		        }
+                var[4].SetBoolean(true);
+                var[5].SetBoolean(true);
+                var[6].SetBoolean(true);
+                char players[16];
+                sprintf(players, "%d/%d", gd.curPlayers, ginfo.maxPlayers);
+                var[7].SetString(players);
+                var[8].SetInt(ping);
+                var[9].SetBoolean(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId));
+                var[10].SetString(ginfo.PasswordGame); // isPassword
+                var[11].SetBoolean(true); // TimeLimit
+                var[12].SetBoolean(false); // TiralAllowJoin
+                var[13].SetBoolean(false); // donate
+				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon*/
+				var[14].SetBoolean(false); // disable weapon
+				if ( m_browseGamesMode == 0) // Normal Browser
+				{
+					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
+						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
+					if(gUserSettings.BrowseGames_Filter.region_eu && ginfo.region == GBNET_REGION_Europe)
+						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
+				/*	if(gUserSettings.BrowseGames_Filter.region_sa && ginfo.region == GBNET_REGION_US_East)
+						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
+					if (gUserSettings.BrowseGames_Filter.region_ru && ginfo.region == GBNET_REGION_Russia)
+						gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
+			    */
+				}
+				if ( m_browseGamesMode == 1) // Recent
+				{
+					if(gUserSettings.isInRecentGamesList(ginfo.gameServerId))
+					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
+				}
+				if ( m_browseGamesMode == 2) // Favorite
+				{
+					if(gUserSettings.isInFavoriteGamesList(ginfo.gameServerId))
+					    gfxMovie.Invoke("_root.api.Main.BrowseGamesAnim.addGameToList", var, 15);
+				}
+		    }
+		}
 	}
 }
 

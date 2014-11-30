@@ -115,6 +115,7 @@ private:
 	void eventBrowseGamesJoin(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 	void eventBrowseGamesOnAddToFavorites(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 	void eventBrowseGamesRequestList(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
+	void eventTrialUpgradeAccount(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 
 	void eventRequestMyClanInfo(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
 	void eventRequestClanList(r3dScaleformMovie* pMovie, const Scaleform::GFx::Value* args, unsigned argCount);
@@ -244,7 +245,7 @@ private:
 	int		m_CreateGameMode;
 	
 	DWORD		m_joinGameServerId;
-	char		m_joinGamePwd[32];
+	char		m_joinGamePwd[512];
 
 	bool	m_ReloadProfile;
 	float	m_ReloadTimer;

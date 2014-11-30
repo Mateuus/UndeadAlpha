@@ -519,7 +519,7 @@ void CMasterUserServer::DoJoinGame(CServerG* game, DWORD CustomerID, const char*
     ans.result = GBPKT_M2C_JoinGameAns_s::rGameFinished;
     return;
   }
-
+/*
   bool isAdmin = false;
   if(CustomerID == 1281646178 || // sagor
 	 CustomerID == 1288125909 || // sousuke
@@ -532,13 +532,16 @@ void CMasterUserServer::DoJoinGame(CServerG* game, DWORD CustomerID, const char*
     // do not check password for GM, we allow GMs to enter any game
     isAdmin = true;
   }
+*/
 
-  if(game->isPassworded() && !isAdmin) {
-    if(strcmp(game->info_.pwd, pwd) != 0) {
-      ans.result = GBPKT_M2C_JoinGameAns_s::rWrongPassword;
-      return;
-    }
-  }
+   if(game->isPassworded()) 
+   {
+     if(strcmp(game->info_.ginfo.PasswordGame, pwd) != 0) 
+	 {
+        ans.result = GBPKT_M2C_JoinGameAns_s::rWrongPassword;
+        return;
+      }
+   }
   
   game->AddJoiningPlayer(CustomerID);
 

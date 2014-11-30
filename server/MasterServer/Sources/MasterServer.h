@@ -76,8 +76,8 @@ class CServerG : public CServerBase
 	    return false;
 	  return true;
 	}
-	bool		isPassworded() const {
-	  return info_.pwd[0] != 0;
+    bool		isPassworded() const {
+	  return info_.ginfo.PasswordGame[0] != 0;
 	}
 	
 	// return number of possible joining players (ones that connecting right now)

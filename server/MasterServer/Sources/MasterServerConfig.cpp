@@ -96,12 +96,27 @@ void CMasterServerConfig::LoadPermGamesConfig()
     char map[512] = "";
     char data[512] = "";
     char name[512];
+	char PasswordGame[512] ="";
 	char MapSettings[512] ="";
 
     r3dscpy(map,  r3dReadCFG_S(configFile, group, "map", ""));
     r3dscpy(data, r3dReadCFG_S(configFile, group, "data", ""));
     r3dscpy(name, r3dReadCFG_S(configFile, group, "name", ""));
+	r3dscpy(PasswordGame, r3dReadCFG_S(configFile, group, "PasswordGame", ""));
 	r3dscpy(MapSettings, r3dReadCFG_S(configFile, group, "MapSettings", ""));
+
+	/*
+	if (strcmp(MapSettings,"6") == 0)
+	{
+		if (strcmp(PasswordGame,"") == 0)
+				strcpy(MapSettings,"0");
+	}
+	else if (strcmp(MapSettings,"6") != 0)
+	{
+		if (strcmp(PasswordGame,"") != 0)
+			strcpy(PasswordGame,"");
+	}
+	*/
 
     if(name[0] == 0)
       sprintf(name, "PermGame%d", i+1);
@@ -109,7 +124,7 @@ void CMasterServerConfig::LoadPermGamesConfig()
     if(*map == 0)
       continue;
     
-    ParsePermamentGame(i, name, map, data, MapSettings);
+    ParsePermamentGame(i, name, map, data, PasswordGame, MapSettings);
   }
 
   return;  
@@ -144,7 +159,7 @@ static EGBGameRegion StringToGBRegion(const char* str)
   return GBNET_REGION_Unknown;
 }
 
-void CMasterServerConfig::ParsePermamentGame(int gameServerId, const char* name, const char* map, const char* data, const char* MapSettings)
+void CMasterServerConfig::ParsePermamentGame(int gameServerId, const char* name, const char* map, const char* data, const char* PasswordGame, const char* MapSettings)
 {
   char mapid[128];
   char maptype[128];
@@ -167,10 +182,11 @@ void CMasterServerConfig::ParsePermamentGame(int gameServerId, const char* name,
   ginfo.maxPlayers   = maxPlayers;
 
   r3dscpy(ginfo.name, name);
+  r3dscpy(ginfo.PasswordGame,PasswordGame);
   r3dscpy(ginfo.MapSettings,MapSettings);
 
-  r3dOutToLog("permgame: ID:%d, %s, %s\n", 
-    gameServerId, name, mapid);
+  r3dOutToLog("permgame: ID:%d, %s, %s - Password: %s\n",
+    gameServerId, name, mapid,PasswordGame);
   
   EGBGameRegion eregion = StringToGBRegion(region);
   AddPermanentGame(gameServerId, ginfo, eregion);
