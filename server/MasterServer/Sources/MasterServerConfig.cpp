@@ -99,13 +99,21 @@ void CMasterServerConfig::LoadPermGamesConfig()
 	char PasswordGame[512] ="";
 	char MapSettings[512] ="";
 
+	char enableSnipers[512] ="";
+
     r3dscpy(map,  r3dReadCFG_S(configFile, group, "map", ""));
     r3dscpy(data, r3dReadCFG_S(configFile, group, "data", ""));
     r3dscpy(name, r3dReadCFG_S(configFile, group, "name", ""));
 	r3dscpy(PasswordGame, r3dReadCFG_S(configFile, group, "PasswordGame", ""));
 	r3dscpy(MapSettings, r3dReadCFG_S(configFile, group, "MapSettings", ""));
 
-	/*
+	r3dscpy(enableSnipers,  r3dReadCFG_S(configFile, group, "enableSnipers", ""));
+
+
+	if (strcmp(enableSnipers,"1") != 0 && strcmp(enableSnipers,"0") != 0)
+		strcpy(enableSnipers,"1");
+
+	
 	if (strcmp(MapSettings,"6") == 0)
 	{
 		if (strcmp(PasswordGame,"") == 0)
@@ -116,7 +124,7 @@ void CMasterServerConfig::LoadPermGamesConfig()
 		if (strcmp(PasswordGame,"") != 0)
 			strcpy(PasswordGame,"");
 	}
-	*/
+	
 
     if(name[0] == 0)
       sprintf(name, "PermGame%d", i+1);
@@ -124,7 +132,7 @@ void CMasterServerConfig::LoadPermGamesConfig()
     if(*map == 0)
       continue;
     
-    ParsePermamentGame(i, name, map, data, PasswordGame, MapSettings);
+    ParsePermamentGame(i, name, map, data, PasswordGame, MapSettings, enableSnipers);
   }
 
   return;  
@@ -159,7 +167,7 @@ static EGBGameRegion StringToGBRegion(const char* str)
   return GBNET_REGION_Unknown;
 }
 
-void CMasterServerConfig::ParsePermamentGame(int gameServerId, const char* name, const char* map, const char* data, const char* PasswordGame, const char* MapSettings)
+void CMasterServerConfig::ParsePermamentGame(int gameServerId, const char* name, const char* map, const char* data, const char* PasswordGame, const char* MapSettings, const char* enableSnipers)
 {
   char mapid[128];
   char maptype[128];
@@ -173,6 +181,9 @@ void CMasterServerConfig::ParsePermamentGame(int gameServerId, const char* name,
   int maxPlayers;
   int minLevel = 0;
   int maxLevel = 0;
+
+  bool SNP = (strcmp(enableSnipers,"0") == 0)? false : true;
+
   if(3 != sscanf(data, "%d %d %d", &maxPlayers, &minLevel, &maxLevel)) {
     r3dError("bad data format: %s\n", data);
   }
@@ -185,8 +196,9 @@ void CMasterServerConfig::ParsePermamentGame(int gameServerId, const char* name,
   r3dscpy(ginfo.PasswordGame,PasswordGame);
   r3dscpy(ginfo.MapSettings,MapSettings);
 
-  r3dOutToLog("permgame: ID:%d, %s, %s - Password: %s\n",
-    gameServerId, name, mapid,PasswordGame);
+  ginfo.enableSnipers = SNP;
+
+  r3dOutToLog("permgame: ID:%d, %s, %s - Password: %s\n", gameServerId, name, mapid,PasswordGame);
   
   EGBGameRegion eregion = StringToGBRegion(region);
   AddPermanentGame(gameServerId, ginfo, eregion);

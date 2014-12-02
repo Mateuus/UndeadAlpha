@@ -37,6 +37,8 @@ struct GBGameInfo
 	char    PasswordGame[512];
     char	MapSettings[512];
 
+	bool    enableSnipers;
+
 	BYTE	mapId;
 	BYTE	maxPlayers;
 	BYTE	flags;		// some game flags

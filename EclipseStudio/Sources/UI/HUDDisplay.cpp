@@ -134,103 +134,103 @@ bool HUDDisplay::Init()
 	/*	if (ginfo.enableCrosshair)
 			addChatMessage(0,"<SYSTEM>","The Crosshair is Enabled on this server",0);
 		else
-			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);
+			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);*/
 		if (ginfo.enableSnipers)
 			addChatMessage(0,"<SYSTEM>","The Snipers is Enabled on this server",0);
 		else
 			addChatMessage(0,"<SYSTEM>","The Snipers is disabled on this server",0);
-	*/
+	
 		return true;
     }
     else if (strcmp(ginfo.MapSettings,"0") == 0)
     {
         addChatMessage(0,"<SYSTEM>","You have joined officials server",0);
-		/*
-		if (ginfo.enableCrosshair)
+		
+/*	    if (ginfo.enableCrosshair)
 			addChatMessage(0,"<SYSTEM>","The Crosshair is Enabled on this server",0);
 		else
-			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);
+			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);*/
 		if (ginfo.enableSnipers)
 			addChatMessage(0,"<SYSTEM>","The Snipers is Enabled on this server",0);
 		else
 			addChatMessage(0,"<SYSTEM>","The Snipers is disabled on this server",0);
-		*/
+		
 
 		return true;
     }
     else if (strcmp(ginfo.MapSettings,"2") == 0)
     {
         addChatMessage(0,"<SYSTEM>","You have joined Premium server",0);
-		/*
-		if (ginfo.enableCrosshair)
+		
+/*	    if (ginfo.enableCrosshair)
 			addChatMessage(0,"<SYSTEM>","The Crosshair is Enabled on this server",0);
 		else
-			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);
+			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);*/
 		if (ginfo.enableSnipers)
 			addChatMessage(0,"<SYSTEM>","The Snipers is Enabled on this server",0);
 		else
 			addChatMessage(0,"<SYSTEM>","The Snipers is disabled on this server",0);
-		*/
+		
 		return true;
     }
     else if (strcmp(ginfo.MapSettings,"1") == 0)
     {
         addChatMessage(0,"<SYSTEM>","You have joined Public server",0);
-		/*
-		if (ginfo.enableCrosshair)
+		
+/*	    if (ginfo.enableCrosshair)
 			addChatMessage(0,"<SYSTEM>","The Crosshair is Enabled on this server",0);
 		else
-			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);
+			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);*/
 		if (ginfo.enableSnipers)
 			addChatMessage(0,"<SYSTEM>","The Snipers is Enabled on this server",0);
 		else
 			addChatMessage(0,"<SYSTEM>","The Snipers is disabled on this server",0);
-		*/
+		
 		return true;
     }
     else if (strcmp(ginfo.MapSettings,"4") == 0)
     {
         addChatMessage(0,"<SYSTEM>","You have joined StrongHolds server",0);
-		/*
-		if (ginfo.enableCrosshair)
+		
+/*	    if (ginfo.enableCrosshair)
 			addChatMessage(0,"<SYSTEM>","The Crosshair is Enabled on this server",0);
 		else
-			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);
+			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);*/
 		if (ginfo.enableSnipers)
 			addChatMessage(0,"<SYSTEM>","The Snipers is Enabled on this server",0);
 		else
 			addChatMessage(0,"<SYSTEM>","The Snipers is disabled on this server",0);
-		*/
+		
 		return true;
     }
 	else if (strcmp(ginfo.MapSettings,"5") == 0)
     {
         addChatMessage(0,"<SYSTEM>","You have joined Veteran server",0);
-		/*
-		if (ginfo.enableCrosshair)
+		
+/*	    if (ginfo.enableCrosshair)
 			addChatMessage(0,"<SYSTEM>","The Crosshair is Enabled on this server",0);
 		else
-			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);
+			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);*/
 		if (ginfo.enableSnipers)
 			addChatMessage(0,"<SYSTEM>","The Snipers is Enabled on this server",0);
 		else
 			addChatMessage(0,"<SYSTEM>","The Snipers is disabled on this server",0);
-		*/
+		
 		return true;
     }
 	else if (strcmp(ginfo.MapSettings,"3") == 0)
     {
         addChatMessage(0,"<SYSTEM>","You have joined Trial server",0);
-		/*
-		if (ginfo.enableCrosshair)
+		
+	   /*if (ginfo.enableCrosshair)
 			addChatMessage(0,"<SYSTEM>","The Crosshair is Enabled on this server",0);
 		else
-			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);
+			addChatMessage(0,"<SYSTEM>","The Crosshair is disabled on this server",0);*/
 		if (ginfo.enableSnipers)
 			addChatMessage(0,"<SYSTEM>","The Snipers is Enabled on this server",0);
 		else
 			addChatMessage(0,"<SYSTEM>","The Snipers is disabled on this server",0);
-		*/
+		
 		return true;
     }
 		}

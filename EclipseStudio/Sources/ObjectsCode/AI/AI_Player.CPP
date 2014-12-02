@@ -16,6 +16,8 @@
 
 #include "ObjectsCode/weapons/Weapon.h"
 
+#include "multiplayer/MasterServerLogic.h"
+
 #include "ObjectsCode/weapons/Gear.h"
 #include "ObjectsCode/WEAPONS/Ammo.h"
 #include "ObjectsCode/weapons/WeaponArmory.h"
@@ -1053,6 +1055,24 @@ BOOL obj_Player::OnCreate()
 	R3D_LOG_TIMESPAN_START(Ai_Player_OnCreate);
 
 	parent::OnCreate();
+
+	//AntiSniper
+	enableSNP=true; 
+
+	int numGames = (int)gMasterServerLogic.games_.size();
+		int gameCounter = 0;
+		for(int i=0; i<numGames; i++) 
+		{
+			const GBPKT_M2C_GameData_s& gd = gMasterServerLogic.games_[i];
+			const GBGameInfo& ginfo = gd.info;
+			if (ginfo.gameServerId == gClientLogic().m_gameInfo.gameServerId)
+			{
+				enableSNP = ginfo.enableSnipers;
+				break;
+			}
+		}
+		
+
 
 	r3d_assert(PhysXObstacleIndex == -1);
 	if(!NetworkLocal)
@@ -2388,6 +2408,8 @@ void obj_Player::executeWeaponFireLocalPlayer(const r3dPoint3D& from, float reco
 
 	if(wpn->getCategory() == storecat_SNP)
 	{
+		if (!enableSNP)
+			return;
 		// increase recoil for sniper rifle artificially
 		recoil *= 10.0f;
 		//if(!m_isFinishedAiming && spread>0) // if not aiming, make spread really huge

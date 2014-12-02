@@ -3567,9 +3567,8 @@ void FrontendWarZ::processNewGameList()
                 var[11].SetBoolean(true); // TimeLimit
                 var[12].SetBoolean(false); // TiralAllowJoin
                 var[13].SetBoolean(false); // donate
-				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
-				var[14].SetBoolean(AntiSNP); // disable weapon*/
-				var[14].SetBoolean(false); // disable weapon
+				bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon
 				if ( m_browseGamesMode == 0) // Normal Browser
 				{
 					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
@@ -3630,9 +3629,8 @@ void FrontendWarZ::processNewGameList()
                 var[11].SetBoolean(true); // TimeLimit
                 var[12].SetBoolean(false); // TiralAllowJoin
                 var[13].SetBoolean(false); // donate
-				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
-				var[14].SetBoolean(AntiSNP); // disable weapon*/
-				var[14].SetBoolean(false); // disable weapon
+				bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon
 				if ( m_browseGamesMode == 0) // Normal Browser
 				{
 					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
@@ -3693,9 +3691,8 @@ void FrontendWarZ::processNewGameList()
                 var[11].SetBoolean(true); // TimeLimit
                 var[12].SetBoolean(false); // TiralAllowJoin
                 var[13].SetBoolean(false); // donate
-				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
-				var[14].SetBoolean(AntiSNP); // disable weapon*/
-				var[14].SetBoolean(false); // disable weapon
+				bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon
 				if ( m_browseGamesMode == 0) // Normal Browser
 				{
 					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
@@ -3756,9 +3753,8 @@ void FrontendWarZ::processNewGameList()
                 var[11].SetBoolean(true); // TimeLimit
                 var[12].SetBoolean(false); // TiralAllowJoin
                 var[13].SetBoolean(false); // donate
-				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
-				var[14].SetBoolean(AntiSNP); // disable weapon*/
-				var[14].SetBoolean(false); // disable weapon
+				bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon
 				if ( m_browseGamesMode == 0) // Normal Browser
 				{
 					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
@@ -3819,9 +3815,8 @@ void FrontendWarZ::processNewGameList()
                 var[11].SetBoolean(true); // TimeLimit
                 var[12].SetBoolean(false); // TiralAllowJoin
                 var[13].SetBoolean(false); // donate
-				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
-				var[14].SetBoolean(AntiSNP); // disable weapon*/
-				var[14].SetBoolean(false); // disable weapon
+				bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon
 				if ( m_browseGamesMode == 0) // Normal Browser
 				{
 					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
@@ -3882,9 +3877,8 @@ void FrontendWarZ::processNewGameList()
                 var[11].SetBoolean(true); // TimeLimit
                 var[12].SetBoolean(false); // TiralAllowJoin
                 var[13].SetBoolean(false); // donate
-				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
-				var[14].SetBoolean(AntiSNP); // disable weapon*/
-				var[14].SetBoolean(false); // disable weapon
+				bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon
 				if ( m_browseGamesMode == 0) // Normal Browser
 				{
 					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)
@@ -3945,9 +3939,8 @@ void FrontendWarZ::processNewGameList()
                 var[11].SetBoolean(true); // TimeLimit
                 var[12].SetBoolean(false); // TiralAllowJoin
                 var[13].SetBoolean(false); // donate
-				/*bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
-				var[14].SetBoolean(AntiSNP); // disable weapon*/
-				var[14].SetBoolean(false); // disable weapon
+				bool AntiSNP = (ginfo.enableSnipers == true)?false:true;
+				var[14].SetBoolean(AntiSNP); // disable weapon
 				if ( m_browseGamesMode == 0) // Normal Browser
 				{
 					if(gUserSettings.BrowseGames_Filter.region_us && ginfo.region == GBNET_REGION_US_West)

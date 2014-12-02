@@ -23,6 +23,8 @@ public:
 
 	obj_Player();
 
+	bool enableSNP;
+
 	enum AuraType
 	{
 		AT_NONE,
